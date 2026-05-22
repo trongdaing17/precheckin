@@ -70,7 +70,6 @@ window.PROTO_DATA = {
     market: "FIT-INB",
     source: "TRA-AGT",
   },
-  // 18 guests; confNo is reservation-level (distinct from profileId)
   guests: [
     { confNo: "CNF-25-1144-01", profileId: "P-00481", name: "Nguyễn Thị Vân",     room: "1208" },
     { confNo: "CNF-25-1144-02", profileId: "P-00482", name: "Trần Văn An",         room: "1208" },
@@ -91,8 +90,6 @@ window.PROTO_DATA = {
     { confNo: "CNF-25-1144-17", profileId: "P-00497", name: "Hồ Văn Quý",          room: "1221" },
     { confNo: "CNF-25-1144-18", profileId: "P-00498", name: "Lâm Thanh Tùng",      room: "1222" },
   ],
-  // 20 files picked by user; auto-match outcome is precomputed for demo
-  // matches profileId for "matched"; for "ambiguous" matches is an array of candidate profileIds; for "unmapped" matches is null
   pickedFiles: [
     { file: "1744 Nguyen Thi Van.jpg",      size: "412 KB", normalized: "nguyenthivan",   match: "P-00481", status: "matched" },
     { file: "1745 Tran Van An.jpg",         size: "388 KB", normalized: "tranvanan",      match: "P-00482", status: "matched" },
@@ -111,13 +108,10 @@ window.PROTO_DATA = {
     { file: "phan thi my duyen.jpg",        size: "425 KB", normalized: "phanthimyduyen", match: "P-00496", status: "matched" },
     { file: "ho van quy.jpg",               size: "1.8 MB", normalized: "hovanquy",       match: "P-00497", status: "matched" },
     { file: "lam thanh tung.jpg",           size: "402 KB", normalized: "lamthanhtung",   match: "P-00498", status: "matched" },
-    // 3 unmapped files (no match in roster)
     { file: "1758 Nguyen Khanh.jpg",        size: "445 KB", normalized: "nguyenkhanh",    match: null,    status: "unmapped" },
     { file: "IMG_20251228_093412.jpg",      size: "1.2 MB", normalized: "img20251228093412", match: null, status: "unmapped" },
     { file: "phamthuyduong.jpg",            size: "402 KB", normalized: "phamthuyduong",  match: null,    status: "unmapped" },
   ],
-  // Processing outcomes per guest (used in Resolved + Processing screens)
-  // 16 ok, 2 fail
   outcomes: {
     "P-00481": { status: "ok",   bioId: "BIO-7C4A91" },
     "P-00482": { status: "ok",   bioId: "BIO-7C4A92" },
@@ -138,7 +132,6 @@ window.PROTO_DATA = {
     "P-00497": { status: "fail", error: "LOW_QUALITY",    hint: "Ảnh quá mờ — yêu cầu khách gửi ảnh khác" },
     "P-00498": { status: "fail", error: "MULTIPLE_FACES", hint: "Phát hiện 2 khuôn mặt — crop lại" },
   },
-  // Activity logs — most recent first
   activityLogs: [
     {
       id: "log-005",
@@ -190,26 +183,16 @@ window.PROTO_DATA = {
 </script>
 
 <script type="text/babel">
-// Shared shell tokens + atoms (carried over from v1, unchanged)
+// ===== Design tokens + atoms =====
 const PMS = {
-  bg: "#F4F6F8",
-  surface: "#FFFFFF",
-  surfaceMuted: "#FAFBFC",
-  border: "#E2E6EB",
-  borderStrong: "#CDD3DB",
-  ink: "#11202E",
-  inkMuted: "#5B6876",
-  inkSubtle: "#8A95A2",
-  brand: "#0F5A8A",
-  brandSoft: "#E6F0F7",
-  accent: "#0E7C66",
-  accentSoft: "#E2F2EE",
-  warn: "#B6601B",
-  warnSoft: "#FBEFE0",
-  danger: "#B0372F",
-  dangerSoft: "#FBE8E5",
-  ok: "#137A4D",
-  okSoft: "#E2F1E9"
+  bg: "#F4F6F8", surface: "#FFFFFF", surfaceMuted: "#FAFBFC",
+  border: "#E2E6EB", borderStrong: "#CDD3DB",
+  ink: "#11202E", inkMuted: "#5B6876", inkSubtle: "#8A95A2",
+  brand: "#0F5A8A", brandSoft: "#E6F0F7",
+  accent: "#0E7C66", accentSoft: "#E2F2EE",
+  warn: "#B6601B", warnSoft: "#FBEFE0",
+  danger: "#B0372F", dangerSoft: "#FBE8E5",
+  ok: "#137A4D", okSoft: "#E2F1E9",
 };
 const pms = PMS;
 
@@ -227,30 +210,24 @@ const Icon = ({ name, size = 16, stroke = "currentColor" }) => {
     bell: <><path d="M6 8a6 6 0 1 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9z" /><path d="M10 21a2 2 0 0 0 4 0" /></>,
     upload: <><path d="M12 16V4M6 10l6-6 6 6" /><path d="M4 20h16" /></>,
     download: <><path d="M12 4v12M6 10l6 6 6-6" /><path d="M4 20h16" /></>,
-    file: <><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /></>,
     image: <><rect x="3" y="5" width="18" height="14" rx="1.5" /><circle cx="8" cy="10" r="1.5" /><path d="m21 16-5-5-9 9" /></>,
     check: <><path d="m5 13 4 4L19 7" /></>,
     x: <><path d="m6 6 12 12M18 6 6 18" /></>,
     info: <><circle cx="12" cy="12" r="9" /><path d="M12 8h.01M11 12h1v5h1" /></>,
     warn: <><path d="M12 3 2 21h20L12 3z" /><path d="M12 9v6M12 18h.01" /></>,
     arrowRight: <><path d="M5 12h14M13 6l6 6-6 6" /></>,
-    arrowLeft: <><path d="M19 12H5M11 6l-6 6 6 6" /></>,
     chevronDown: <><path d="m6 9 6 6 6-6" /></>,
     chevronRight: <><path d="m9 6 6 6-6 6" /></>,
     plus: <><path d="M12 5v14M5 12h14" /></>,
     edit: <><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" /></>,
     face: <><circle cx="12" cy="12" r="9" /><circle cx="9" cy="10" r="0.8" fill="currentColor" /><circle cx="15" cy="10" r="0.8" fill="currentColor" /><path d="M9 15c1.5 1.2 4.5 1.2 6 0" /></>,
-    scan: <><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" /><circle cx="12" cy="12" r="3.5" /><path d="M12 8.5v-1M12 16.5v-1M8.5 12h-1M16.5 12h-1" /></>,
+    scan: <><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" /><circle cx="12" cy="12" r="3.5" /></>,
     lock: <><rect x="5" y="11" width="14" height="9" rx="1.5" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>,
     refresh: <><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16" /><path d="M3 21v-5h5" /></>,
     skip: <><path d="M5 4v16M19 4v16M9 6l8 6-8 6V6z" /></>,
-    list: <><path d="M3 6h18M3 12h18M3 18h18" /></>,
-    grid: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></>,
     user: <><circle cx="12" cy="8" r="3.5" /><path d="M5 21c0-3.5 3-6.5 7-6.5s7 3 7 6.5" /></>,
     trash: <><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" /></>,
-    eye: <><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></>,
     download2: <><path d="M12 3v12M7 10l5 5 5-5" /><path d="M5 21h14" /></>,
-    send: <><path d="m4 4 16 8-16 8 3-8-3-8z" /></>,
     history: <><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v5h5" /><path d="M12 7v5l3 2" /></>,
     folder: <><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" /></>,
   };
@@ -258,41 +235,23 @@ const Icon = ({ name, size = 16, stroke = "currentColor" }) => {
 };
 
 const TopBar = ({ propertyName = "Vinpearl Hanoi (HND)", user = "phuong.nv" }) =>
-<div style={{
-  height: 48, background: pms.surface, borderBottom: `1px solid ${pms.border}`,
-  display: "flex", alignItems: "center", padding: "0 16px", gap: 16, flexShrink: 0
-}}>
+  <div style={{ height: 48, background: pms.surface, borderBottom: `1px solid ${pms.border}`, display: "flex", alignItems: "center", padding: "0 16px", gap: 16, flexShrink: 0 }}>
     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-      <div style={{
-      width: 26, height: 26, borderRadius: 6, background: pms.brand,
-      display: "grid", placeItems: "center", color: "#fff", fontSize: 12, fontWeight: 700, letterSpacing: 0.5
-    }}>HM</div>
+      <div style={{ width: 26, height: 26, borderRadius: 6, background: pms.brand, display: "grid", placeItems: "center", color: "#fff", fontSize: 12, fontWeight: 700 }}>HM</div>
       <div style={{ fontSize: 13, fontWeight: 600, color: pms.ink }}>HotelOps · Front Office</div>
     </div>
-    <div style={{
-    display: "flex", alignItems: "center", gap: 8, padding: "5px 10px", borderRadius: 6,
-    border: `1px solid ${pms.border}`, fontSize: 12, color: pms.inkMuted, background: pms.surfaceMuted
-  }}>
-      <Icon name="home" size={14} />
-      {propertyName}
-      <Icon name="chevronDown" size={12} />
+    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 10px", borderRadius: 6, border: `1px solid ${pms.border}`, fontSize: 12, color: pms.inkMuted, background: pms.surfaceMuted }}>
+      <Icon name="home" size={14}/> {propertyName} <Icon name="chevronDown" size={12}/>
     </div>
-    <div style={{
-    flex: 1, maxWidth: 360, display: "flex", alignItems: "center", gap: 8,
-    padding: "5px 10px", borderRadius: 6, border: `1px solid ${pms.border}`, color: pms.inkSubtle, fontSize: 12
-  }}>
-      <Icon name="search" size={14} />
-      <span>Search reservation, profile, room…</span>
+    <div style={{ flex: 1, maxWidth: 360, display: "flex", alignItems: "center", gap: 8, padding: "5px 10px", borderRadius: 6, border: `1px solid ${pms.border}`, color: pms.inkSubtle, fontSize: 12 }}>
+      <Icon name="search" size={14}/> <span>Search reservation, profile, room…</span>
       <span style={{ marginLeft: "auto", fontSize: 11, color: pms.inkSubtle, border: `1px solid ${pms.border}`, borderRadius: 3, padding: "0 4px" }}>⌘K</span>
     </div>
     <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 14, color: pms.inkMuted }}>
       <div style={{ fontSize: 12 }}>Business date: <strong style={{ color: pms.ink }}>28 Dec 2025</strong></div>
-      <Icon name="bell" size={16} />
+      <Icon name="bell" size={16}/>
       <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
-        <div style={{
-        width: 26, height: 26, borderRadius: "50%", background: pms.brandSoft, color: pms.brand,
-        display: "grid", placeItems: "center", fontSize: 11, fontWeight: 600
-      }}>PN</div>
+        <div style={{ width: 26, height: 26, borderRadius: "50%", background: pms.brandSoft, color: pms.brand, display: "grid", placeItems: "center", fontSize: 11, fontWeight: 600 }}>PN</div>
         <span>{user}</span>
       </div>
     </div>
@@ -306,40 +265,32 @@ const SideNav = ({ active = "groups" }) => {
     { key: "rooms", label: "Room Plan", icon: "door" },
     { key: "billing", label: "Billing", icon: "cash" },
     { key: "reports", label: "Reports", icon: "chart" },
-    { key: "settings", label: "Settings", icon: "settings" }
+    { key: "settings", label: "Settings", icon: "settings" },
   ];
   return (
-    <div style={{
-      width: 188, background: pms.surface, borderRight: `1px solid ${pms.border}`,
-      display: "flex", flexDirection: "column", padding: "10px 8px", flexShrink: 0
-    }}>
+    <div style={{ width: 188, background: pms.surface, borderRight: `1px solid ${pms.border}`, display: "flex", flexDirection: "column", padding: "10px 8px", flexShrink: 0 }}>
       <div style={{ fontSize: 10, color: pms.inkSubtle, textTransform: "uppercase", letterSpacing: 0.8, padding: "6px 8px" }}>Front Office</div>
-      {items.map((it) => {
+      {items.map(it => {
         const a = it.key === active;
         return (
-          <div key={it.key} style={{
-            display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", borderRadius: 6,
-            color: a ? pms.brand : pms.inkMuted, background: a ? pms.brandSoft : "transparent",
-            fontSize: 13, fontWeight: a ? 600 : 500, marginBottom: 2, cursor: "default"
-          }}>
-            <Icon name={it.icon} size={15} />
-            {it.label}
-          </div>);
+          <div key={it.key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", borderRadius: 6, color: a ? pms.brand : pms.inkMuted, background: a ? pms.brandSoft : "transparent", fontSize: 13, fontWeight: a ? 600 : 500, marginBottom: 2 }}>
+            <Icon name={it.icon} size={15}/> {it.label}
+          </div>
+        );
       })}
-      <div style={{ marginTop: "auto", padding: 8, fontSize: 11, color: pms.inkSubtle, borderTop: `1px solid ${pms.border}` }}>
-        v3.14.2 · build 2812
-      </div>
-    </div>);
+      <div style={{ marginTop: "auto", padding: 8, fontSize: 11, color: pms.inkSubtle, borderTop: `1px solid ${pms.border}` }}>v3.14.2 · build 2812</div>
+    </div>
+  );
 };
 
 const Crumb = ({ items }) =>
-<div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: pms.inkMuted }}>
+  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: pms.inkMuted }}>
     {items.map((it, i) =>
-  <React.Fragment key={i}>
+      <React.Fragment key={i}>
         <span style={{ color: i === items.length - 1 ? pms.ink : pms.inkMuted, fontWeight: i === items.length - 1 ? 600 : 400 }}>{it}</span>
-        {i < items.length - 1 && <Icon name="chevronRight" size={11} />}
+        {i < items.length - 1 && <Icon name="chevronRight" size={11}/>}
       </React.Fragment>
-  )}
+    )}
   </div>;
 
 const StatusPill = ({ tone = "neutral", children, dot = true }) => {
@@ -349,122 +300,68 @@ const StatusPill = ({ tone = "neutral", children, dot = true }) => {
     ok: { bg: pms.okSoft, fg: pms.ok, dot: pms.ok },
     warn: { bg: pms.warnSoft, fg: pms.warn, dot: pms.warn },
     danger: { bg: pms.dangerSoft, fg: pms.danger, dot: pms.danger },
-    accent: { bg: pms.accentSoft, fg: pms.accent, dot: pms.accent }
+    accent: { bg: pms.accentSoft, fg: pms.accent, dot: pms.accent },
   }[tone];
   return (
-    <span style={{
-      display: "inline-flex", alignItems: "center", gap: 5, padding: "2px 8px",
-      background: m.bg, color: m.fg, borderRadius: 999, fontSize: 11, fontWeight: 600, lineHeight: 1.5
-    }}>
-      {dot && <span style={{ width: 6, height: 6, borderRadius: "50%", background: m.dot }} />}
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "2px 8px", background: m.bg, color: m.fg, borderRadius: 999, fontSize: 11, fontWeight: 600, lineHeight: 1.5 }}>
+      {dot && <span style={{ width: 6, height: 6, borderRadius: "50%", background: m.dot }}/>}
       {children}
-    </span>);
+    </span>
+  );
 };
 
 const Btn = ({ variant = "default", icon, children, onClick, disabled, size = "md", style = {} }) => {
-  const variants = {
+  const v = {
     primary: { bg: pms.brand, fg: "#fff", border: pms.brand },
     default: { bg: pms.surface, fg: pms.ink, border: pms.borderStrong },
     ghost: { bg: "transparent", fg: pms.inkMuted, border: "transparent" },
     danger: { bg: pms.surface, fg: pms.danger, border: pms.borderStrong },
-    success: { bg: pms.accent, fg: "#fff", border: pms.accent }
+    success: { bg: pms.accent, fg: "#fff", border: pms.accent },
   }[variant];
   const pad = size === "sm" ? "4px 10px" : size === "lg" ? "9px 18px" : "6px 14px";
   const fs = size === "sm" ? 12 : size === "lg" ? 14 : 13;
   return (
-    <button onClick={onClick} disabled={disabled} style={{
-        display: "inline-flex", alignItems: "center", gap: 6, padding: pad, fontSize: fs, fontWeight: 500,
-        borderRadius: 5, background: variants.bg, color: variants.fg, border: `1px solid ${variants.border}`,
-        cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.5 : 1, fontFamily: "inherit",
-        ...style
-      }}>
-      {icon && <Icon name={icon} size={fs} />}
+    <button onClick={onClick} disabled={disabled} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: pad, fontSize: fs, fontWeight: 500, borderRadius: 5, background: v.bg, color: v.fg, border: `1px solid ${v.border}`, cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.5 : 1, fontFamily: "inherit", ...style }}>
+      {icon && <Icon name={icon} size={fs}/>}
       {children}
-    </button>);
+    </button>
+  );
 };
 
-const Card = ({ title, subtitle, actions, children, padding = 16, style = {} }) =>
-<div style={{
-  background: pms.surface, border: `1px solid ${pms.border}`, borderRadius: 6,
-  overflow: "hidden", ...style
-}}>
-    {(title || actions) &&
-  <div style={{
-    display: "flex", alignItems: "center", justifyContent: "space-between",
-    padding: "10px 14px", borderBottom: `1px solid ${pms.border}`, background: pms.surfaceMuted
-  }}>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: pms.ink }}>{title}</div>
-          {subtitle && <div style={{ fontSize: 11, color: pms.inkMuted, marginTop: 1 }}>{subtitle}</div>}
-        </div>
-        <div style={{ display: "flex", gap: 6 }}>{actions}</div>
-      </div>
-  }
-    <div style={{ padding }}>{children}</div>
-  </div>;
-
 const Field = ({ label, children, hint }) =>
-<div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+  <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
     <div style={{ fontSize: 11, fontWeight: 500, color: pms.inkMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>{label}</div>
     <div style={{ fontSize: 13, color: pms.ink }}>{children}</div>
     {hint && <div style={{ fontSize: 11, color: pms.inkSubtle }}>{hint}</div>}
   </div>;
 
 const FacePlaceholder = ({ size = 36, name = "", state = "default" }) => {
-  const palette = [
-    ["#E6F0F7", "#0F5A8A"],
-    ["#FBEFE0", "#B6601B"],
-    ["#E2F2EE", "#0E7C66"],
-    ["#FBE8E5", "#B0372F"],
-    ["#EEEAF7", "#5A3D9E"],
-    ["#F2EAE0", "#7A5530"]
-  ];
+  const palette = [["#E6F0F7","#0F5A8A"],["#FBEFE0","#B6601B"],["#E2F2EE","#0E7C66"],["#FBE8E5","#B0372F"],["#EEEAF7","#5A3D9E"],["#F2EAE0","#7A5530"]];
   let h = 0;
   for (let i = 0; i < name.length; i++) h = h * 31 + name.charCodeAt(i) | 0;
   const [bg, fg] = palette[Math.abs(h) % palette.length];
-  const initials = name.split(/\s+/).filter(Boolean).slice(-2).map((s) => s[0]).join("").toUpperCase() || "?";
-
+  const initials = name.split(/\s+/).filter(Boolean).slice(-2).map(s => s[0]).join("").toUpperCase() || "?";
   if (state === "missing" || state === "empty") {
     return (
-      <div style={{
-        width: size, height: size, borderRadius: 4, background: "#F4F6F8",
-        border: `1px dashed ${pms.borderStrong}`, display: "grid", placeItems: "center", color: pms.inkSubtle,
-        flexShrink: 0
-      }}>
-        <Icon name="image" size={size * 0.5} />
-      </div>);
+      <div style={{ width: size, height: size, borderRadius: 4, background: "#F4F6F8", border: `1px dashed ${pms.borderStrong}`, display: "grid", placeItems: "center", color: pms.inkSubtle, flexShrink: 0 }}>
+        <Icon name="image" size={size * 0.5}/>
+      </div>
+    );
   }
   return (
-    <div style={{
-      width: size, height: size, borderRadius: 4, background: bg, color: fg,
-      display: "grid", placeItems: "center", fontSize: size * 0.36, fontWeight: 600,
-      flexShrink: 0, position: "relative", overflow: "hidden",
-      backgroundImage:
-      `radial-gradient(ellipse at 50% 38%, ${fg}22 0 ${size * 0.18}px, transparent ${size * 0.2}px),` +
-      `radial-gradient(ellipse at 50% 78%, ${fg}33 0 ${size * 0.32}px, transparent ${size * 0.34}px)`
-    }}>
-      <span style={{
-        position: "absolute", bottom: 1, right: 2, fontSize: size * 0.22, fontWeight: 700,
-        color: fg, opacity: 0.55, letterSpacing: 0.3
-      }}>{initials}</span>
-    </div>);
+    <div style={{ width: size, height: size, borderRadius: 4, background: bg, color: fg, display: "grid", placeItems: "center", fontSize: size * 0.36, fontWeight: 600, flexShrink: 0, position: "relative", overflow: "hidden",
+      backgroundImage: `radial-gradient(ellipse at 50% 38%, ${fg}22 0 ${size * 0.18}px, transparent ${size * 0.2}px), radial-gradient(ellipse at 50% 78%, ${fg}33 0 ${size * 0.32}px, transparent ${size * 0.34}px)` }}>
+      <span style={{ position: "absolute", bottom: 1, right: 2, fontSize: size * 0.22, fontWeight: 700, color: fg, opacity: 0.55 }}>{initials}</span>
+    </div>
+  );
 };
 
-window.PMS = PMS;
-window.Icon = Icon;
-window.TopBar = TopBar;
-window.SideNav = SideNav;
-window.Crumb = Crumb;
-window.StatusPill = StatusPill;
-window.Btn = Btn;
-window.Card = Card;
-window.Field = Field;
-window.FacePlaceholder = FacePlaceholder;
+window.PMS = PMS; window.Icon = Icon; window.TopBar = TopBar; window.SideNav = SideNav; window.Crumb = Crumb;
+window.StatusPill = StatusPill; window.Btn = Btn; window.Field = Field; window.FacePlaceholder = FacePlaceholder;
 </script>
 
 <script type="text/babel">
-// Itinerary shell — header card + 4 tabs (Itinerary info / Room List / Face ID Registration / Activity Logs)
-// activeTab default = "faceid" (v2 entry point)
+// ===== Itinerary Shell — header + 4 tabs (default Face ID Registration) =====
 function ItineraryShell({ activeTab = "faceid", onTabChange, children, headerBadge }) {
   const it = window.PROTO_DATA.itinerary;
   const setTab = onTabChange || (() => {});
@@ -475,11 +372,7 @@ function ItineraryShell({ activeTab = "faceid", onTabChange, children, headerBad
         <SideNav active="groups"/>
         <div style={{ flex: 1, overflow: "auto", padding: "14px 18px 18px", position: "relative" }}>
           <Crumb items={["Front Office", "Group Reservation", `${it.itineraryNo} — ${it.groupName}`]}/>
-
-          {/* Header card */}
-          <div style={{
-            marginTop: 10, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, padding: "14px 16px",
-          }}>
+          <div style={{ marginTop: 10, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, padding: "14px 16px" }}>
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -496,10 +389,7 @@ function ItineraryShell({ activeTab = "faceid", onTabChange, children, headerBad
                 <Btn icon="download">Export rooming list</Btn>
               </div>
             </div>
-            <div style={{
-              display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 16,
-              marginTop: 14, paddingTop: 14, borderTop: `1px solid ${PMS.border}`,
-            }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 16, marginTop: 14, paddingTop: 14, borderTop: `1px solid ${PMS.border}` }}>
               <Field label="Arrival">{it.arrival}</Field>
               <Field label="Departure">{it.departure}</Field>
               <Field label="Nights">{it.nights}</Field>
@@ -509,55 +399,35 @@ function ItineraryShell({ activeTab = "faceid", onTabChange, children, headerBad
               <Field label="Source">{it.source}</Field>
             </div>
           </div>
-
-          {/* Tabs — Face ID Registration default active */}
           <div style={{ marginTop: 14, display: "flex", gap: 4, borderBottom: `1px solid ${PMS.border}` }}>
-            {[
-              ["info",     "Itinerary info"],
-              ["rooms",    "Room List"],
-              ["faceid",   "Face ID Registration"],
-              ["activity", "Activity Logs"],
-            ].map(([k, l]) => {
+            {[["info", "Itinerary info"], ["rooms", "Room List"], ["faceid", "Face ID Registration"], ["activity", "Activity Logs"]].map(([k, l]) => {
               const active = k === activeTab;
               return (
-                <div key={k} onClick={() => setTab(k)} style={{
-                  padding: "8px 14px", fontSize: 13, fontWeight: active ? 600 : 500,
-                  color: active ? PMS.brand : PMS.inkMuted, cursor: "pointer",
-                  borderBottom: `2px solid ${active ? PMS.brand : "transparent"}`,
-                  marginBottom: -1,
-                }}>{l}</div>
+                <div key={k} onClick={() => setTab(k)} style={{ padding: "8px 14px", fontSize: 13, fontWeight: active ? 600 : 500, color: active ? PMS.brand : PMS.inkMuted, cursor: "pointer", borderBottom: `2px solid ${active ? PMS.brand : "transparent"}`, marginBottom: -1 }}>
+                  {l}
+                </div>
               );
             })}
           </div>
-
-          {/* Tab content */}
           <div style={{ marginTop: 12 }}>{children}</div>
         </div>
       </div>
     </div>
   );
 }
-
 window.ItineraryShell = ItineraryShell;
 </script>
 
 <script type="text/babel">
-// Stats banner shared across Default / Reviewing / Resolved
+// ===== Stats banner (consistent across default / reviewing / resolved) =====
+// 4 stats reflect persistent Face ID state of the group's guests.
 function StatsBanner({ stats }) {
-  // stats = [{label, value, tone}]
   return (
-    <div style={{
-      background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6,
-      display: "grid", gridTemplateColumns: `repeat(${stats.length}, 1fr)`, overflow: "hidden"
-    }}>
+    <div style={{ background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, display: "grid", gridTemplateColumns: `repeat(${stats.length}, 1fr)`, overflow: "hidden" }}>
       {stats.map((s, i) => {
         const color = s.tone === "ok" ? PMS.ok : s.tone === "warn" ? PMS.warn : s.tone === "danger" ? PMS.danger : PMS.ink;
         return (
-          <div key={i} style={{
-            padding: "12px 14px",
-            borderRight: i < stats.length - 1 ? `1px solid ${PMS.border}` : "none",
-            display: "flex", flexDirection: "column", gap: 4
-          }}>
+          <div key={i} style={{ padding: "12px 14px", borderRight: i < stats.length - 1 ? `1px solid ${PMS.border}` : "none", display: "flex", flexDirection: "column", gap: 4 }}>
             <div style={{ fontSize: 11, color: PMS.inkMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>{s.label}</div>
             <div style={{ fontSize: 22, fontWeight: 700, color }}>{s.value}</div>
           </div>
@@ -567,59 +437,80 @@ function StatsBanner({ stats }) {
   );
 }
 
-// Guest-centric row renderer — modes: default | reviewing | resolved
-function GuestRow({ guest, mode, file, status, candidates, profilesById, onPickFile, onSkip, onRetry }) {
-  // status: "unmapped" | "matched" | "ambiguous" | "no-photo" | "ok" | "fail"
-  // file: { file, size } if any
-  // candidates: [profileId] for ambiguous; here it's reverse — files candidates for this guest
-  const isResolvedOk = mode === "resolved" && status === "ok";
-  const isResolvedFail = mode === "resolved" && status === "fail";
-  const isReviewingMapped = mode === "reviewing" && status === "matched";
-  const isReviewingAmbig = mode === "reviewing" && status === "ambiguous";
-  const isReviewingNoPhoto = mode === "reviewing" && status === "no-photo";
-  const isDefaultUnmapped = mode === "default";
-
-  // Status pill content
-  const statusPill = (() => {
-    if (isResolvedOk) return <StatusPill tone="ok"><Icon name="check" size={10}/> Đã map</StatusPill>;
-    if (isResolvedFail) return <StatusPill tone="danger">✗ {guest.error || "Failed"}</StatusPill>;
-    if (isReviewingMapped) return <StatusPill tone="ok">✓ Mapped</StatusPill>;
-    if (isReviewingAmbig) return <StatusPill tone="warn">⚠ Needs review</StatusPill>;
-    if (isReviewingNoPhoto) return <StatusPill tone="neutral" dot={false}>Chưa có ảnh</StatusPill>;
-    return <StatusPill tone="warn" dot={false}>Chưa map</StatusPill>;
-  })();
-
-  // Face cell content
-  const faceCell = (() => {
-    if (file && (isResolvedOk || isReviewingMapped || isReviewingAmbig)) {
-      return <FacePlaceholder size={36} name={file.file.replace(/\.[a-z]+$/i, "")} />;
+// ===== Status cell — single column, content depends on mode =====
+// faceIdState: "none" | "registered" | "failed" (persistent)
+// reviewState (only when mode==="reviewing"): "matched" | "ambiguous" | "no-photo"
+function StatusCell({ mode, faceIdState, reviewState, bioId, error }) {
+  if (mode === "reviewing") {
+    let primary;
+    if (reviewState === "matched") primary = <StatusPill tone="ok">✓ Mapped</StatusPill>;
+    else if (reviewState === "ambiguous") primary = <StatusPill tone="warn">⚠ Needs review</StatusPill>;
+    else primary = <StatusPill tone="neutral" dot={false}>◯ No photo</StatusPill>;
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        {primary}
+        <div style={{ fontSize: 10, color: PMS.inkSubtle, paddingLeft: 2 }}>
+          Face ID: {faceIdState === "registered" ? "Đã đăng ký" : faceIdState === "failed" ? "Failed" : "Chưa đăng ký"}
+        </div>
+      </div>
+    );
+  }
+  if (mode === "resolved") {
+    if (faceIdState === "registered") {
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <StatusPill tone="ok"><Icon name="check" size={10}/> Đã đăng ký</StatusPill>
+          <div style={{ fontSize: 10, color: PMS.inkSubtle, fontFamily: "ui-monospace, Menlo, monospace", paddingLeft: 2 }}>{bioId}</div>
+        </div>
+      );
     }
-    if (isResolvedFail && file) {
+    if (faceIdState === "failed") {
+      return <StatusPill tone="danger">✗ {error || "Failed"}</StatusPill>;
+    }
+  }
+  // default mode (or fallback)
+  if (faceIdState === "registered") {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <StatusPill tone="ok"><Icon name="check" size={10}/> Đã đăng ký</StatusPill>
+        {bioId && <div style={{ fontSize: 10, color: PMS.inkSubtle, fontFamily: "ui-monospace, Menlo, monospace", paddingLeft: 2 }}>{bioId}</div>}
+      </div>
+    );
+  }
+  if (faceIdState === "failed") return <StatusPill tone="danger">✗ {error || "Failed"}</StatusPill>;
+  return <StatusPill tone="warn" dot={false}>◯ Chưa đăng ký</StatusPill>;
+}
+
+// ===== Guest row — single shared component across default / reviewing / resolved =====
+// `mode` controls Face cell + action buttons; Status cell uses StatusCell.
+function GuestRow({ guest, mode, file, reviewState, faceIdState, bioId, error, onRetry }) {
+  // Face cell visualization
+  const faceCell = (() => {
+    if (file && (mode === "reviewing" || mode === "resolved") && faceIdState !== "none") {
+      return <FacePlaceholder size={36} name={file.file.replace(/\.[a-z]+$/i, "")}/>;
+    }
+    if (file && mode === "reviewing") {
+      return <FacePlaceholder size={36} name={file.file.replace(/\.[a-z]+$/i, "")}/>;
+    }
+    if (mode === "resolved" && faceIdState === "failed" && file) {
       return (
         <div style={{ position: "relative" }}>
-          <FacePlaceholder size={36} name={file.file.replace(/\.[a-z]+$/i, "")} />
-          <div style={{
-            position: "absolute", inset: 0, background: "rgba(176,55,47,0.18)", borderRadius: 4,
-            display: "grid", placeItems: "center", color: PMS.danger
-          }}>
+          <FacePlaceholder size={36} name={file.file.replace(/\.[a-z]+$/i, "")}/>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(176,55,47,0.18)", borderRadius: 4, display: "grid", placeItems: "center", color: PMS.danger }}>
             <Icon name="warn" size={16}/>
           </div>
         </div>
       );
     }
-    return <FacePlaceholder size={36} name="?" state="missing" />;
+    return <FacePlaceholder size={36} name="?" state="missing"/>;
   })();
 
   return (
     <tr style={{ borderBottom: `1px solid ${PMS.border}` }}>
-      <td style={{ padding: "8px 12px", color: PMS.inkMuted, fontFamily: "ui-monospace, Menlo, monospace", fontSize: 11 }}>
-        {guest.confNo}
-      </td>
+      <td style={{ padding: "8px 12px", color: PMS.inkMuted, fontFamily: "ui-monospace, Menlo, monospace", fontSize: 11 }}>{guest.confNo}</td>
       <td style={{ padding: "8px 12px", color: PMS.ink, fontWeight: 500 }}>
         {guest.name}
-        <div style={{ fontSize: 10, color: PMS.inkSubtle, fontFamily: "ui-monospace, Menlo, monospace" }}>
-          {guest.profileId} · Room {guest.room}
-        </div>
+        <div style={{ fontSize: 10, color: PMS.inkSubtle, fontFamily: "ui-monospace, Menlo, monospace" }}>{guest.profileId} · Room {guest.room}</div>
       </td>
       <td style={{ padding: "8px 12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -629,142 +520,235 @@ function GuestRow({ guest, mode, file, status, candidates, profilesById, onPickF
               {file.file}
             </div>
           )}
-          {isReviewingAmbig && (
+          {mode === "reviewing" && reviewState === "ambiguous" && (
             <div style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 6px", borderRadius: 3, background: PMS.warnSoft, color: PMS.warn, fontSize: 11 }}>
               <Icon name="chevronDown" size={11}/> 2 matches
             </div>
           )}
         </div>
       </td>
-      <td style={{ padding: "8px 12px" }}>{statusPill}</td>
+      <td style={{ padding: "8px 12px" }}>
+        <StatusCell mode={mode} faceIdState={faceIdState} reviewState={reviewState} bioId={bioId} error={error}/>
+      </td>
       <td style={{ padding: "8px 12px", textAlign: "right" }}>
-        {isReviewingAmbig && <Btn size="sm" variant="ghost" icon="check">Pick this</Btn>}
-        {isReviewingNoPhoto && <Btn size="sm" variant="ghost" icon="plus">Gán ảnh</Btn>}
-        {isResolvedFail && <Btn size="sm" variant="ghost" icon="refresh" onClick={onRetry}>Re-try</Btn>}
-        {(isReviewingMapped || isResolvedOk) && <Icon name="chevronRight" size={14} stroke={PMS.inkSubtle}/>}
+        {mode === "reviewing" && reviewState === "ambiguous" && <Btn size="sm" variant="ghost" icon="check">Pick this</Btn>}
+        {mode === "reviewing" && reviewState === "no-photo" && <Btn size="sm" variant="ghost" icon="plus">Gán ảnh</Btn>}
+        {mode === "resolved" && faceIdState === "failed" && <Btn size="sm" variant="ghost" icon="refresh" onClick={onRetry}>Re-try</Btn>}
+        {(mode === "default" || (mode === "resolved" && faceIdState === "registered") || (mode === "reviewing" && reviewState === "matched")) && (
+          <Icon name="chevronRight" size={14} stroke={PMS.inkSubtle}/>
+        )}
       </td>
     </tr>
   );
 }
-
-// PDPA consent inline bar
-function PdpaConsent({ checked, onChange }) {
-  return (
-    <div style={{
-      padding: "10px 12px", borderRadius: 6, background: PMS.warnSoft, border: `1px solid #EBC79A`,
-      display: "flex", gap: 10, alignItems: "flex-start"
-    }}>
-      <div style={{ color: PMS.warn, marginTop: 1 }}><Icon name="lock" size={16}/></div>
-      <label style={{ fontSize: 12, color: PMS.ink, lineHeight: 1.55, flex: 1, cursor: "pointer", display: "flex", gap: 8, alignItems: "flex-start" }}>
-        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} style={{ marginTop: 2 }}/>
-        <span>
-          <strong>PDPA consent.</strong> The guest has consented to the hotel storing their facial image for check-in purposes. All actions are logged for audit purposes. (NĐ 13/2023/NĐ-CP)
-        </span>
-      </label>
-    </div>
-  );
-}
-
 window.StatsBanner = StatsBanner;
+window.StatusCell = StatusCell;
 window.GuestRow = GuestRow;
-window.PdpaConsent = PdpaConsent;
 </script>
 
 <script type="text/babel">
-// SCREEN 01 — Itinerary detail, default tab = Face ID Registration, DEFAULT state (all guests "Chưa map")
-function ScreenDefault() {
+// ===== Shared content of the Face ID Registration tab =====
+// Renders the SAME list across default / reviewing / resolved modes (only chrome above + action buttons change).
+function FaceIdTabContent({ mode, onAction, batchVersion }) {
   const data = window.PROTO_DATA;
-  const [consent, setConsent] = React.useState(false);
   const [search, setSearch] = React.useState("");
 
-  const visibleGuests = data.guests.filter(g =>
+  // Build per-guest view object (file + reviewState + faceIdState + bioId/error)
+  const rows = React.useMemo(() => {
+    return data.guests.map(g => {
+      // file association for this guest in current batch
+      const matchedFile = data.pickedFiles.find(f => f.match === g.profileId && f.status === "matched");
+      const ambigFile = data.pickedFiles.find(f => f.status === "ambiguous" && Array.isArray(f.match) && f.match.includes(g.profileId));
+      const file = matchedFile || ambigFile || null;
+      const reviewState = matchedFile ? "matched" : ambigFile ? "ambiguous" : "no-photo";
+
+      let faceIdState = "none";
+      let bioId, error;
+      if (mode === "resolved") {
+        const o = data.outcomes[g.profileId];
+        if (o) {
+          faceIdState = o.status === "ok" ? "registered" : "failed";
+          bioId = o.bioId; error = o.error;
+        }
+      }
+      return { guest: g, file, reviewState, faceIdState, bioId, error };
+    });
+  }, [mode]);
+
+  const visible = rows.filter(r =>
     !search ||
-    g.confNo.toLowerCase().includes(search.toLowerCase()) ||
-    g.name.toLowerCase().includes(search.toLowerCase())
+    r.guest.confNo.toLowerCase().includes(search.toLowerCase()) ||
+    r.guest.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  return (
-    <ItineraryShell activeTab="faceid" onTabChange={(t) => t === "activity" && window.GO && window.GO(6)}>
-      {/* Stats banner — all "Chưa map" */}
-      <StatsBanner stats={[
-        { label: "Chưa map",     value: data.guests.length, tone: "warn" },
-        { label: "Đã map",       value: 0, tone: "neutral" },
-        { label: "Needs review", value: 0, tone: "neutral" },
-        { label: "Failed",       value: 0, tone: "neutral" },
-      ]}/>
+  const unmappedFiles = data.pickedFiles.filter(f => f.status === "unmapped");
 
-      {/* PDPA + primary actions */}
-      <div style={{ marginTop: 12, display: "flex", gap: 12, alignItems: "stretch" }}>
-        <div style={{ flex: 1 }}>
-          <PdpaConsent checked={consent} onChange={setConsent}/>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, justifyContent: "center" }}>
-          <Btn variant="primary" icon="upload" disabled={!consent} onClick={() => window.GO && window.GO(2)}>
-            Đăng ký Face ID hàng loạt
-          </Btn>
-          <Btn icon="plus" disabled={!consent}>+ Map single guest</Btn>
-        </div>
-      </div>
+  // Persistent stats (always reflect Face ID state across the group)
+  const persistentStats = {
+    notRegistered: rows.filter(r => r.faceIdState === "none").length,
+    registered: rows.filter(r => r.faceIdState === "registered").length,
+    failed: rows.filter(r => r.faceIdState === "failed").length,
+  };
+  const reviewCounts = {
+    matched: rows.filter(r => r.reviewState === "matched").length,
+    ambiguous: rows.filter(r => r.reviewState === "ambiguous").length,
+    noPhoto: rows.filter(r => r.reviewState === "no-photo").length,
+  };
+  const ready = reviewCounts.matched;
 
-      {/* Search */}
-      <div style={{
-        marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12,
-        background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, padding: "8px 10px"
-      }}>
+  // ----- Stats banner: 4 stats, same labels across all modes -----
+  const banner = (
+    <StatsBanner stats={[
+      { label: "Total guests",  value: data.guests.length, tone: "neutral" },
+      { label: "Chưa đăng ký",  value: persistentStats.notRegistered, tone: persistentStats.notRegistered > 0 ? "warn" : "neutral" },
+      { label: "Đã đăng ký",    value: persistentStats.registered, tone: persistentStats.registered > 0 ? "ok" : "neutral" },
+      { label: "Failed",        value: persistentStats.failed, tone: persistentStats.failed > 0 ? "danger" : "neutral" },
+    ]}/>
+  );
+
+  // ----- Top action area changes by mode -----
+  let topActions;
+  if (mode === "default") {
+    topActions = (
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, padding: "10px 14px" }}>
         <div style={{ fontSize: 12, color: PMS.inkMuted }}>
           <strong style={{ color: PMS.ink }}>{data.guests.length}</strong> guests trong đoàn · chưa khách nào đăng ký Face ID
         </div>
-        <div style={{
-          display: "flex", alignItems: "center", gap: 8, padding: "5px 10px", borderRadius: 5,
-          border: `1px solid ${PMS.border}`, fontSize: 12, color: PMS.inkSubtle, minWidth: 240
-        }}>
+        <div style={{ display: "flex", gap: 6 }}>
+          <Btn icon="plus">+ Map single guest</Btn>
+          <Btn variant="primary" icon="upload" onClick={() => onAction && onAction("openUpload")}>
+            Đăng ký Face ID hàng loạt
+          </Btn>
+        </div>
+      </div>
+    );
+  } else if (mode === "reviewing") {
+    topActions = (
+      <div style={{ background: PMS.warnSoft, border: `1px solid #EBC79A`, borderRadius: 6, padding: "10px 14px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ fontSize: 12, color: PMS.ink }}>
+            <strong>⚠ Đang review batch #{batchVersion || 1}</strong> · 20 files → {data.guests.length} guests ·{" "}
+            <span style={{ color: PMS.ok }}>✓ Mapped {reviewCounts.matched}</span> ·{" "}
+            <span style={{ color: PMS.warn }}>⚠ Needs review {reviewCounts.ambiguous}</span> ·{" "}
+            <span style={{ color: PMS.inkMuted }}>◯ No photo {reviewCounts.noPhoto}</span> ·{" "}
+            <span style={{ color: PMS.danger }}>📄 Unmapped files {unmappedFiles.length}</span>
+          </div>
+          <div style={{ display: "flex", gap: 6 }}>
+            <Btn size="sm" icon="upload" onClick={() => onAction && onAction("uploadMore")}>Upload more</Btn>
+            <Btn size="sm" icon="refresh" onClick={() => onAction && onAction("replace")}>Replace batch</Btn>
+            <Btn size="sm" variant="danger" icon="x" onClick={() => onAction && onAction("cancel")}>Cancel</Btn>
+            <Btn size="sm" variant="primary" icon="scan" disabled={ready === 0} onClick={() => onAction && onAction("confirm")}>
+              Confirm {ready} & Register →
+            </Btn>
+          </div>
+        </div>
+      </div>
+    );
+  } else { // resolved
+    topActions = (
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, padding: "10px 14px" }}>
+        <div style={{ fontSize: 12, color: PMS.inkMuted }}>
+          <strong style={{ color: PMS.ink }}>{persistentStats.registered} / {data.guests.length}</strong> guests sẵn sàng Face ID check-in
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          <Btn icon="upload" onClick={() => onAction && onAction("openUpload")}>Upload thêm</Btn>
+          {persistentStats.failed > 0 && <Btn variant="primary" icon="refresh">↻ Re-run failed</Btn>}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {banner}
+      <div style={{ marginTop: 12 }}>{topActions}</div>
+
+      {/* Search */}
+      <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, padding: "8px 10px" }}>
+        <div style={{ fontSize: 12, color: PMS.inkMuted }}>
+          Hiển thị {visible.length} / {rows.length} guests
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 10px", borderRadius: 5, border: `1px solid ${PMS.border}`, fontSize: 12, color: PMS.inkSubtle, minWidth: 240 }}>
           <Icon name="search" size={13}/>
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm theo conf. no hoặc tên…"
-            style={{ border: "none", outline: "none", background: "transparent", fontSize: 12, color: PMS.ink, flex: 1 }}/>
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm theo conf. no hoặc tên…" style={{ border: "none", outline: "none", background: "transparent", fontSize: 12, color: PMS.ink, flex: 1 }}/>
         </div>
       </div>
 
-      {/* Guest list */}
+      {/* The list — same component across all 3 modes */}
       <div style={{ marginTop: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, overflow: "hidden" }}>
-        <div style={{ maxHeight: 460, overflow: "auto" }}>
+        <div style={{ maxHeight: mode === "reviewing" ? 360 : 460, overflow: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr style={{ background: PMS.surfaceMuted, color: PMS.inkMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.4, position: "sticky", top: 0 }}>
                 {["Conf. No", "Guest", "Face", "Status", ""].map((h, i) =>
-                  <th key={i} style={{ textAlign: "left", padding: "9px 12px", fontWeight: 500, borderBottom: `1px solid ${PMS.border}` }}>{h}</th>)}
+                  <th key={i} style={{ textAlign: "left", padding: "9px 12px", fontWeight: 500, borderBottom: `1px solid ${PMS.border}` }}>{h}</th>
+                )}
               </tr>
             </thead>
             <tbody>
-              {visibleGuests.map((g) => (
-                <GuestRow key={g.confNo} guest={g} mode="default" status="unmapped"/>
+              {visible.map(r => (
+                <GuestRow
+                  key={r.guest.confNo}
+                  guest={r.guest}
+                  mode={mode}
+                  file={mode === "default" ? null : r.file}
+                  reviewState={mode === "reviewing" ? r.reviewState : undefined}
+                  faceIdState={r.faceIdState}
+                  bioId={r.bioId}
+                  error={r.error}
+                  onRetry={() => onAction && onAction("retry", r.guest)}
+                />
               ))}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Help banner */}
-      <div style={{
-        marginTop: 12, padding: "10px 12px", borderRadius: 6, background: PMS.brandSoft,
-        border: `1px solid #BBD4E5`, display: "flex", gap: 10, alignItems: "flex-start",
-      }}>
-        <div style={{ color: PMS.brand, marginTop: 1 }}><Icon name="info" size={16}/></div>
-        <div style={{ fontSize: 12, color: PMS.ink, lineHeight: 1.55 }}>
-          <strong>Hướng dẫn:</strong> Chọn nhiều file ảnh (JPG/PNG/JPEG, ≤ 5 MB mỗi ảnh) — hệ thống tự ghép tên file với khách trong rooming list. Tên file recommended: <code style={{ background: PMS.bg, padding: "1px 5px", borderRadius: 3 }}>nguyen thi van.jpg</code>
+      {/* Unmapped files panel (reviewing only) */}
+      {mode === "reviewing" && unmappedFiles.length > 0 && (
+        <div style={{ marginTop: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, overflow: "hidden" }}>
+          <div style={{ padding: "10px 14px", borderBottom: `1px solid ${PMS.border}`, background: PMS.surfaceMuted }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>▾ Unmapped files ({unmappedFiles.length})</div>
+            <div style={{ fontSize: 11, color: PMS.inkMuted, marginTop: 1 }}>File không match guest nào — gán thủ công hoặc skip</div>
+          </div>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <tbody>
+              {unmappedFiles.map(f => (
+                <tr key={f.file} style={{ borderBottom: `1px solid ${PMS.border}` }}>
+                  <td style={{ padding: "8px 12px", width: 48 }}>
+                    <FacePlaceholder size={32} name={f.file.replace(/\.[a-z]+$/i, "")}/>
+                  </td>
+                  <td style={{ padding: "8px 12px" }}>
+                    <div style={{ fontWeight: 500, color: PMS.ink, fontSize: 12 }}>{f.file}</div>
+                    <div style={{ fontSize: 11, color: PMS.inkSubtle }}>
+                      {f.size} · normalized: <code style={{ background: PMS.bg, padding: "0 3px", borderRadius: 2 }}>{f.normalized}</code>
+                    </div>
+                  </td>
+                  <td style={{ padding: "8px 12px", textAlign: "right" }}>
+                    <div style={{ display: "inline-flex", gap: 6 }}>
+                      <Btn size="sm" variant="ghost" icon="user">Gán cho guest ▾</Btn>
+                      <Btn size="sm" variant="ghost" icon="skip">Skip</Btn>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </div>
-    </ItineraryShell>
+      )}
+    </>
   );
 }
-window.ScreenDefault = ScreenDefault;
+window.FaceIdTabContent = FaceIdTabContent;
 </script>
 
 <script type="text/babel">
-// SCREEN 02 — File picker simulation + uploading + auto-matching (intermediate state)
-function ScreenUploading() {
-  const data = window.PROTO_DATA;
-  const [stage, setStage] = React.useState("picker"); // picker | uploading | matching | done
+// ===== Upload Modal — overlays on top of Default state =====
+// Drop zone for image files (multi-select). Replaces v1 ZIP upload modal.
+function UploadModal({ onClose, onDone }) {
+  const [stage, setStage] = React.useState("idle"); // idle | uploading | matching | done
   const [progress, setProgress] = React.useState(0);
+  const [consent, setConsent] = React.useState(false);
 
   React.useEffect(() => {
     if (stage === "uploading") {
@@ -782,240 +766,154 @@ function ScreenUploading() {
   }, [stage]);
 
   return (
-    <ItineraryShell activeTab="faceid">
-      {/* dimmed default view in background; overlay shows upload progress */}
-      <StatsBanner stats={[
-        { label: "Chưa map", value: data.guests.length, tone: "warn" },
-        { label: "Đã map", value: 0, tone: "neutral" },
-        { label: "Needs review", value: 0, tone: "neutral" },
-        { label: "Failed", value: 0, tone: "neutral" },
-      ]}/>
+    <div style={{ position: "absolute", inset: 0, background: "rgba(17,32,46,0.42)", display: "grid", placeItems: "center", zIndex: 50 }}>
+      <div style={{ width: 640, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 8, boxShadow: "0 24px 60px rgba(17,32,46,0.18)", overflow: "hidden" }}>
+        <div style={{ padding: "14px 18px", borderBottom: `1px solid ${PMS.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: PMS.ink }}>Đăng ký Face ID hàng loạt</div>
+            <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 2 }}>
+              {stage === "idle" && "Bước 1/3 · Chọn file ảnh"}
+              {(stage === "uploading" || stage === "matching") && "Bước 1/3 · Đang upload + auto-match"}
+              {stage === "done" && "Bước 1/3 · Hoàn tất — sẵn sàng review"}
+            </div>
+          </div>
+          <Btn size="sm" variant="ghost" icon="x" onClick={onClose}>Đóng</Btn>
+        </div>
 
-      {/* Upload progress card replacing actions area */}
-      <div style={{ marginTop: 12, background: PMS.surface, border: `1px solid ${PMS.brand}`, borderRadius: 6, padding: "14px 16px" }}>
-        {stage === "picker" && (
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 6, background: PMS.brandSoft, color: PMS.brand, display: "grid", placeItems: "center" }}>
-                <Icon name="folder" size={20}/>
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>Đang mở file picker…</div>
-                <div style={{ fontSize: 11, color: PMS.inkMuted }}>Chọn nhiều ảnh JPG/PNG/JPEG (≤ 5 MB/ảnh, tối đa 200 ảnh)</div>
-              </div>
-              <Btn variant="primary" onClick={() => setStage("uploading")}>Simulate · Chọn 20 file</Btn>
-            </div>
-          </div>
-        )}
-        {(stage === "uploading" || stage === "matching") && (
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 6, background: PMS.brandSoft, color: PMS.brand, display: "grid", placeItems: "center" }}>
-                <Icon name="upload" size={20}/>
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>
-                  {stage === "uploading" ? `Đang upload 20 file ảnh… ${progress}%` : "Đang auto-match tên file với guest profile…"}
-                </div>
-                <div style={{ fontSize: 11, color: PMS.inkMuted }}>
-                  {stage === "uploading"
-                    ? "Tổng 8.4 MB · Lưu vào S3 bucket"
-                    : "Chuẩn hoá tên (bỏ số thứ tự, bỏ dấu, lowercase) · so sánh với 18 guest"}
-                </div>
-              </div>
-              <Btn size="sm" variant="ghost" icon="x" onClick={() => window.GO && window.GO(1)}>Cancel</Btn>
-            </div>
-            <div style={{ height: 6, marginTop: 14, background: PMS.bg, borderRadius: 999, overflow: "hidden" }}>
-              <div style={{
-                height: "100%",
-                width: stage === "uploading" ? `${progress}%` : "100%",
-                background: stage === "uploading" ? PMS.brand : PMS.accent,
-                transition: "width 0.2s",
-              }}/>
-            </div>
-          </div>
-        )}
-        {stage === "done" && (
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 38, height: 38, borderRadius: "50%", background: PMS.okSoft, color: PMS.ok, display: "grid", placeItems: "center" }}>
-                <Icon name="check" size={20}/>
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>Hoàn tất upload + auto-match</div>
-                <div style={{ fontSize: 11, color: PMS.inkMuted }}>
-                  20 file đã upload · 16 mapped · 1 ambiguous · 3 unmapped files · 1 guest chưa có ảnh
-                </div>
-              </div>
-              <Btn variant="primary" icon="arrowRight" onClick={() => window.GO && window.GO(3)}>
-                Tiếp tục review
-              </Btn>
-            </div>
-          </div>
-        )}
-      </div>
+        <div style={{ display: "flex", gap: 6, padding: "10px 18px", background: PMS.surfaceMuted, borderBottom: `1px solid ${PMS.border}`, fontSize: 11 }}>
+          {["1. Chọn ảnh", "2. Review mapping", "3. Confirm & Register"].map((s, i) => (
+            <React.Fragment key={i}>
+              <span style={{ color: i === 0 ? PMS.brand : PMS.inkSubtle, fontWeight: i === 0 ? 600 : 500 }}>{s}</span>
+              {i < 2 && <span style={{ color: PMS.inkSubtle }}>›</span>}
+            </React.Fragment>
+          ))}
+        </div>
 
-      {/* Dimmed list below */}
-      <div style={{ marginTop: 12, opacity: 0.45, pointerEvents: "none" }}>
-        <div style={{ background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, overflow: "hidden" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-            <thead>
-              <tr style={{ background: PMS.surfaceMuted, color: PMS.inkMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.4 }}>
-                {["Conf. No", "Guest", "Face", "Status", ""].map((h, i) =>
-                  <th key={i} style={{ textAlign: "left", padding: "9px 12px", fontWeight: 500, borderBottom: `1px solid ${PMS.border}` }}>{h}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {data.guests.slice(0, 6).map((g) => (
-                <GuestRow key={g.confNo} guest={g} mode="default" status="unmapped"/>
-              ))}
-            </tbody>
-          </table>
+        <div style={{ padding: 18 }}>
+          {stage === "idle" && (
+            <>
+              <div onClick={() => consent && setStage("uploading")} style={{
+                border: `2px dashed ${consent ? PMS.borderStrong : PMS.border}`, borderRadius: 8, padding: "32px 20px",
+                textAlign: "center", background: PMS.surfaceMuted, cursor: consent ? "pointer" : "not-allowed", opacity: consent ? 1 : 0.55,
+              }}>
+                <div style={{ display: "inline-grid", placeItems: "center", width: 52, height: 52, borderRadius: 12, background: PMS.brandSoft, color: PMS.brand, marginBottom: 10 }}>
+                  <Icon name="upload" size={26}/>
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: PMS.ink }}>Kéo thả ảnh JPG/PNG/JPEG vào đây, hoặc click để chọn</div>
+                <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 4, lineHeight: 1.6 }}>
+                  Multi-select · đặt tên file = họ tên khách (vd <code style={{ background: PMS.bg, padding: "1px 5px", borderRadius: 3 }}>nguyen thi van.jpg</code>)<br/>
+                  Tối đa 200 ảnh · Mỗi ảnh ≤ 5 MB · Tổng ≤ 500 MB
+                </div>
+              </div>
+              <div style={{ marginTop: 14, padding: 12, background: PMS.warnSoft, border: `1px solid #EBC79A`, borderRadius: 6, display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <div style={{ color: PMS.warn, marginTop: 1 }}><Icon name="lock" size={16}/></div>
+                <label style={{ fontSize: 12, color: PMS.ink, lineHeight: 1.55, flex: 1, cursor: "pointer", display: "flex", gap: 8, alignItems: "flex-start" }}>
+                  <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} style={{ marginTop: 2 }}/>
+                  <span>
+                    <strong>PDPA consent.</strong> Khách đã đồng ý cho khách sạn lưu ảnh khuôn mặt phục vụ check-in. Mọi thao tác đều được ghi audit log. (NĐ 13/2023/NĐ-CP)
+                  </span>
+                </label>
+              </div>
+              <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end", gap: 6 }}>
+                <Btn onClick={onClose}>Huỷ</Btn>
+                <Btn variant="primary" icon="folder" disabled={!consent} onClick={() => setStage("uploading")}>Chọn ảnh từ máy</Btn>
+              </div>
+            </>
+          )}
+
+          {(stage === "uploading" || stage === "matching") && (
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", border: `1px solid ${PMS.border}`, borderRadius: 6 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 6, background: PMS.brandSoft, color: PMS.brand, display: "grid", placeItems: "center" }}>
+                  <Icon name="upload" size={20}/>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>20 ảnh · 8.4 MB</div>
+                  <div style={{ fontSize: 11, color: PMS.inkMuted }}>
+                    {stage === "uploading" ? `Đang upload lên S3… ${progress}%` : "Đang chuẩn hoá tên + auto-match với 18 guest profile…"}
+                  </div>
+                </div>
+                <Btn size="sm" variant="ghost" icon="x" onClick={onClose}>Huỷ</Btn>
+              </div>
+              <div style={{ height: 6, marginTop: 14, background: PMS.bg, borderRadius: 999, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: stage === "uploading" ? `${progress}%` : "100%", background: stage === "uploading" ? PMS.brand : PMS.accent, transition: "width 0.2s" }}/>
+              </div>
+              <div style={{ marginTop: 18, fontSize: 12, color: PMS.inkMuted, lineHeight: 1.7 }}>
+                {stage === "uploading"
+                  ? <>↑ Đang tải 20 file ảnh…</>
+                  : <>
+                      ✓ Đã upload: 20 ảnh hợp lệ (JPG/PNG/JPEG, đều ≤ 5 MB)<br/>
+                      ⏳ Đang chuẩn hoá tên file (bỏ số thứ tự, bỏ dấu, lowercase…)<br/>
+                      ⏳ Đang ghép với 18 guest trong rooming list…
+                    </>}
+              </div>
+            </>
+          )}
+
+          {stage === "done" && (
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: PMS.okSoft, color: PMS.ok, display: "grid", placeItems: "center" }}>
+                  <Icon name="check" size={18}/>
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>Đã upload 20 ảnh</div>
+                  <div style={{ fontSize: 12, color: PMS.inkMuted }}>16 mapped · 1 needs review · 3 unmapped files · 1 guest chưa có ảnh</div>
+                </div>
+              </div>
+              <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end", gap: 6 }}>
+                <Btn onClick={() => setStage("idle")}>Chọn ảnh khác</Btn>
+                <Btn variant="primary" icon="arrowRight" onClick={onDone}>Tiếp tục review</Btn>
+              </div>
+            </>
+          )}
         </div>
       </div>
-    </ItineraryShell>
+    </div>
   );
 }
-window.ScreenUploading = ScreenUploading;
+window.UploadModal = UploadModal;
 </script>
 
 <script type="text/babel">
-// SCREEN 03 — Tab Face ID Registration, REVIEWING state (inline, Option B)
-// List "biến" sang review mode: status column = suggested mapping; sticky action bar; Unmapped files section at bottom
-function ScreenReviewing() {
-  const data = window.PROTO_DATA;
-
-  // Build review mapping per guest
-  // For each guest: find any file with match === profileId, mark "matched"
-  // For guests with no file: "no-photo"
-  // For files with status "ambiguous": add to both candidate guests as "ambiguous"
-  const reviewMapping = React.useMemo(() => {
-    return data.guests.map(g => {
-      const exactFile = data.pickedFiles.find(f => f.match === g.profileId && f.status === "matched");
-      if (exactFile) return { ...g, file: exactFile, status: "matched" };
-      const ambig = data.pickedFiles.find(f => f.status === "ambiguous" && Array.isArray(f.match) && f.match.includes(g.profileId));
-      if (ambig) return { ...g, file: ambig, status: "ambiguous" };
-      return { ...g, file: null, status: "no-photo" };
-    });
-  }, []);
-
-  const unmappedFiles = data.pickedFiles.filter(f => f.status === "unmapped");
-
-  const counts = {
-    matched: reviewMapping.filter(r => r.status === "matched").length,
-    ambiguous: reviewMapping.filter(r => r.status === "ambiguous").length,
-    noPhoto: reviewMapping.filter(r => r.status === "no-photo").length,
-    unmapped: unmappedFiles.length,
-  };
-  const ready = counts.matched; // chỉ guests đã mapped sẵn sàng register; ambiguous cần user confirm
-  const reviewBadge = (
-    <StatusPill tone="warn"><Icon name="warn" size={11}/> Đang review batch</StatusPill>
-  );
-
+// ===== SCREEN 01 — Default state (tab Face ID Registration, all guests Chưa đăng ký) =====
+function ScreenDefault() {
   return (
-    <ItineraryShell activeTab="faceid" headerBadge={reviewBadge}>
-      {/* Sticky review action bar — top */}
-      <div style={{
-        background: PMS.warnSoft, border: `1px solid #EBC79A`, borderRadius: 6,
-        padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12
-      }}>
-        <div style={{ fontSize: 12, color: PMS.ink }}>
-          <strong>⚠ Đang review batch</strong> · 20 files → {data.guests.length} guests ·{" "}
-          <span style={{ color: PMS.ok }}>✓ Mapped {counts.matched}</span> ·{" "}
-          <span style={{ color: PMS.warn }}>⚠ Needs review {counts.ambiguous}</span> ·{" "}
-          <span style={{ color: PMS.inkMuted }}>◯ Chưa có ảnh {counts.noPhoto}</span>
-        </div>
-        <div style={{ display: "flex", gap: 6 }}>
-          <Btn variant="danger" icon="x" onClick={() => window.GO && window.GO(1)}>Cancel batch</Btn>
-          <Btn variant="primary" icon="scan" disabled={ready === 0} onClick={() => window.GO && window.GO(4)}>
-            Confirm {ready} & Register →
-          </Btn>
-        </div>
-      </div>
-
-      {/* Guest list — guest-centric, status column shows review state */}
-      <div style={{ marginTop: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, overflow: "hidden" }}>
-        <div style={{ maxHeight: 380, overflow: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-            <thead>
-              <tr style={{ background: PMS.surfaceMuted, color: PMS.inkMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.4, position: "sticky", top: 0 }}>
-                {["Conf. No", "Guest", "Face suggested", "Status (review)", ""].map((h, i) =>
-                  <th key={i} style={{ textAlign: "left", padding: "9px 12px", fontWeight: 500, borderBottom: `1px solid ${PMS.border}` }}>{h}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {reviewMapping.map((g) => (
-                <GuestRow key={g.confNo} guest={g} mode="reviewing" file={g.file} status={g.status}/>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Unmapped files section */}
-      {unmappedFiles.length > 0 && (
-        <div style={{ marginTop: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, overflow: "hidden" }}>
-          <div style={{ padding: "10px 14px", borderBottom: `1px solid ${PMS.border}`, background: PMS.surfaceMuted, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>
-                ▾ Unmapped files ({unmappedFiles.length})
-              </div>
-              <div style={{ fontSize: 11, color: PMS.inkMuted, marginTop: 1 }}>
-                File không match guest nào trong roster — gán thủ công hoặc skip
-              </div>
-            </div>
-          </div>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-            <tbody>
-              {unmappedFiles.map((f) => (
-                <tr key={f.file} style={{ borderBottom: `1px solid ${PMS.border}` }}>
-                  <td style={{ padding: "8px 12px", width: 48 }}>
-                    <FacePlaceholder size={32} name={f.file.replace(/\.[a-z]+$/i, "")}/>
-                  </td>
-                  <td style={{ padding: "8px 12px" }}>
-                    <div style={{ fontWeight: 500, color: PMS.ink, fontSize: 12 }}>{f.file}</div>
-                    <div style={{ fontSize: 11, color: PMS.inkSubtle }}>{f.size} · normalized: <code style={{ background: PMS.bg, padding: "0 3px", borderRadius: 2 }}>{f.normalized}</code></div>
-                  </td>
-                  <td style={{ padding: "8px 12px", textAlign: "right" }}>
-                    <div style={{ display: "inline-flex", gap: 6 }}>
-                      <Btn size="sm" variant="ghost" icon="user">Gán cho guest ▾</Btn>
-                      <Btn size="sm" variant="ghost" icon="skip">Skip</Btn>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Sticky bottom action bar (repeated) */}
-      <div style={{
-        marginTop: 12, padding: "10px 14px", background: PMS.surface, border: `1px solid ${PMS.border}`,
-        borderRadius: 6, display: "flex", justifyContent: "space-between", alignItems: "center"
-      }}>
-        <div style={{ fontSize: 12, color: PMS.inkMuted }}>
-          <Icon name="lock" size={11}/> Face ID API chỉ được gọi khi bạn click "Confirm & Register". Mọi thao tác đều log để audit (NĐ 13/2023/NĐ-CP).
-        </div>
-        <div style={{ display: "flex", gap: 6 }}>
-          <Btn variant="danger" icon="x" onClick={() => window.GO && window.GO(1)}>Cancel batch</Btn>
-          <Btn variant="primary" icon="scan" disabled={ready === 0} onClick={() => window.GO && window.GO(4)}>
-            Confirm {ready} & Register →
-          </Btn>
-        </div>
-      </div>
+    <ItineraryShell activeTab="faceid" onTabChange={(t) => t === "activity" && window.GO && window.GO(6)}>
+      <FaceIdTabContent mode="default" onAction={(action) => {
+        if (action === "openUpload") window.GO && window.GO(2);
+      }}/>
     </ItineraryShell>
   );
 }
-window.ScreenReviewing = ScreenReviewing;
-</script>
 
-<script type="text/babel">
-// SCREEN 04 — Processing as MODAL overlay on top of Reviewing screen
+// ===== SCREEN 02 — Upload Modal overlaid on Default =====
+function ScreenUploadModal() {
+  return (
+    <ItineraryShell activeTab="faceid">
+      <FaceIdTabContent mode="default"/>
+      <UploadModal onClose={() => window.GO && window.GO(1)} onDone={() => window.GO && window.GO(3)}/>
+    </ItineraryShell>
+  );
+}
+
+// ===== SCREEN 03 — Reviewing state (SAME list as Default, content adapts via mode) =====
+function ScreenReviewing() {
+  const headerBadge = <StatusPill tone="warn"><Icon name="warn" size={11}/> Đang review batch</StatusPill>;
+  return (
+    <ItineraryShell activeTab="faceid" headerBadge={headerBadge}>
+      <FaceIdTabContent mode="reviewing" batchVersion={1} onAction={(action) => {
+        if (action === "confirm") window.GO && window.GO(4);
+        else if (action === "cancel") window.GO && window.GO(1);
+        else if (action === "uploadMore" || action === "replace") window.GO && window.GO(2);
+      }}/>
+    </ItineraryShell>
+  );
+}
+
+// ===== SCREEN 04 — Processing Modal overlaid on Reviewing =====
 function ScreenProcessing() {
   const data = window.PROTO_DATA;
-
-  // Queue: 18 guests (skip the 2 unmapped files), 16 ok + 2 fail
   const queue = React.useMemo(() => {
     return data.guests.map(g => {
       const file = data.pickedFiles.find(f => f.match === g.profileId && f.status === "matched")
@@ -1024,7 +922,6 @@ function ScreenProcessing() {
       return { ...g, file: file ? file.file : "(manual)", result: outcome.status, bioId: outcome.bioId, error: outcome.error };
     });
   }, []);
-
   const [idx, setIdx] = React.useState(0);
   const [statuses, setStatuses] = React.useState(() => queue.map(() => "pending"));
   const [done, setDone] = React.useState(false);
@@ -1036,7 +933,7 @@ function ScreenProcessing() {
     const t = setTimeout(() => {
       setStatuses(s => { const ns = [...s]; ns[idx] = queue[idx].result; return ns; });
       setIdx(i => i + 1);
-    }, 280 + Math.random() * 220);
+    }, 280 + Math.random() * 200);
     return () => clearTimeout(t);
   }, [idx, done]);
 
@@ -1048,38 +945,28 @@ function ScreenProcessing() {
   };
   const pct = Math.round((counts.done + counts.failed) / queue.length * 100);
 
+  const headerBadge = <StatusPill tone="brand"><Icon name="scan" size={11}/> Đang xử lý</StatusPill>;
+
   return (
-    <ItineraryShell activeTab="faceid" headerBadge={<StatusPill tone="brand"><Icon name="scan" size={11}/> Đang xử lý</StatusPill>}>
-      {/* Background: review state, but dimmed */}
+    <ItineraryShell activeTab="faceid" headerBadge={headerBadge}>
+      {/* Reviewing state dimmed behind */}
       <div style={{ opacity: 0.35, pointerEvents: "none" }}>
-        <div style={{ background: PMS.warnSoft, borderRadius: 6, padding: "10px 14px", fontSize: 12, color: PMS.ink }}>
-          ⚠ Đang review batch · 18 / 18 guests sẵn sàng register
-        </div>
-        <div style={{ marginTop: 12, height: 320, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6 }}/>
+        <FaceIdTabContent mode="reviewing"/>
       </div>
 
-      {/* Modal overlay */}
-      <div style={{
-        position: "absolute", inset: 0, background: "rgba(17,32,46,0.42)",
-        display: "grid", placeItems: "center", zIndex: 50
-      }}>
-        <div style={{
-          width: 640, maxHeight: "82%", background: PMS.surface, border: `1px solid ${PMS.border}`,
-          borderRadius: 8, boxShadow: "0 24px 60px rgba(17,32,46,0.18)", overflow: "hidden",
-          display: "flex", flexDirection: "column"
-        }}>
+      <div style={{ position: "absolute", inset: 0, background: "rgba(17,32,46,0.42)", display: "grid", placeItems: "center", zIndex: 50 }}>
+        <div style={{ width: 640, maxHeight: "82%", background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 8, boxShadow: "0 24px 60px rgba(17,32,46,0.18)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
           <div style={{ padding: "14px 18px", borderBottom: `1px solid ${PMS.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <div style={{ fontSize: 15, fontWeight: 700, color: PMS.ink }}>
                 {done ? "Hoàn tất batch" : "Đang xử lý Face ID"}
               </div>
               <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 2 }}>
-                {counts.done + counts.failed} / {queue.length} processed · concurrency = 5
+                Bước 3/3 · {counts.done + counts.failed} / {queue.length} processed · concurrency = 5
               </div>
             </div>
             {!done && <Btn size="sm" variant="ghost" icon="x">Cancel</Btn>}
           </div>
-
           <div style={{ padding: "12px 18px", borderBottom: `1px solid ${PMS.border}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: PMS.inkMuted, marginBottom: 6 }}>
               <span>
@@ -1095,7 +982,6 @@ function ScreenProcessing() {
               <div style={{ width: `${counts.failed / queue.length * 100}%`, background: PMS.danger, transition: "width 0.3s" }}/>
             </div>
           </div>
-
           <div style={{ overflow: "auto", flex: 1 }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
               <thead>
@@ -1131,12 +1017,9 @@ function ScreenProcessing() {
               </tbody>
             </table>
           </div>
-
           {done && (
             <div style={{ padding: "10px 18px", background: PMS.surfaceMuted, borderTop: `1px solid ${PMS.border}`, display: "flex", justifyContent: "flex-end", gap: 6 }}>
-              <Btn variant="primary" icon="arrowRight" onClick={() => window.GO && window.GO(5)}>
-                Xem kết quả →
-              </Btn>
+              <Btn variant="primary" icon="arrowRight" onClick={() => window.GO && window.GO(5)}>Xem kết quả →</Btn>
             </div>
           )}
         </div>
@@ -1144,56 +1027,31 @@ function ScreenProcessing() {
     </ItineraryShell>
   );
 }
-window.ScreenProcessing = ScreenProcessing;
-</script>
 
-<script type="text/babel">
-// SCREEN 05 — RESOLVED state: inline result banner + list updated with per-guest status
+// ===== SCREEN 05 — Resolved state (SAME list, status column shows registered/failed) =====
 function ScreenResolved() {
   const data = window.PROTO_DATA;
   const [bannerDismissed, setBannerDismissed] = React.useState(false);
-
-  // Compose resolved guest list with outcomes
-  const guests = React.useMemo(() => {
-    return data.guests.map(g => {
-      const file = data.pickedFiles.find(f => f.match === g.profileId && f.status === "matched")
-                || data.pickedFiles.find(f => f.status === "ambiguous" && Array.isArray(f.match) && f.match.includes(g.profileId));
-      const outcome = data.outcomes[g.profileId];
-      return { ...g, file, status: outcome.status, bioId: outcome.bioId, error: outcome.error, hint: outcome.hint };
-    });
-  }, []);
-
-  const counts = {
-    ok: guests.filter(g => g.status === "ok").length,
-    fail: guests.filter(g => g.status === "fail").length,
-    unmapped: 0, // skipped in batch
-  };
-
-  const headerBadge = (
-    <StatusPill tone="accent"><Icon name="face" size={11}/> Face ID {counts.ok}/{data.guests.length} sẵn sàng</StatusPill>
-  );
+  const okCount = Object.values(data.outcomes).filter(o => o.status === "ok").length;
+  const failCount = Object.values(data.outcomes).filter(o => o.status === "fail").length;
+  const failedNames = data.guests
+    .filter(g => data.outcomes[g.profileId] && data.outcomes[g.profileId].status === "fail")
+    .map(g => `${g.name} (${data.outcomes[g.profileId].error})`)
+    .join(", ");
+  const headerBadge = <StatusPill tone="accent"><Icon name="face" size={11}/> {okCount}/{data.guests.length} sẵn sàng</StatusPill>;
 
   return (
     <ItineraryShell activeTab="faceid" onTabChange={(t) => t === "activity" && window.GO && window.GO(6)} headerBadge={headerBadge}>
-      {/* Inline result banner */}
       {!bannerDismissed && (
-        <div style={{
-          background: counts.fail > 0 ? PMS.warnSoft : PMS.okSoft,
-          border: `1px solid ${counts.fail > 0 ? "#EBC79A" : "#BFE0CF"}`,
-          borderRadius: 6, padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start"
-        }}>
-          <div style={{ color: counts.fail > 0 ? PMS.warn : PMS.ok, marginTop: 1 }}>
-            <Icon name={counts.fail > 0 ? "warn" : "check"} size={18}/>
+        <div style={{ background: failCount > 0 ? PMS.warnSoft : PMS.okSoft, border: `1px solid ${failCount > 0 ? "#EBC79A" : "#BFE0CF"}`, borderRadius: 6, padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 12 }}>
+          <div style={{ color: failCount > 0 ? PMS.warn : PMS.ok, marginTop: 1 }}>
+            <Icon name={failCount > 0 ? "warn" : "check"} size={18}/>
           </div>
           <div style={{ flex: 1, fontSize: 12, color: PMS.ink, lineHeight: 1.55 }}>
-            <strong>Hoàn tất batch · {counts.ok} thành công · {counts.fail} lỗi · 28/12/2025 09:42</strong>
-            {counts.fail > 0 && (
-              <div style={{ marginTop: 4, color: PMS.inkMuted }}>
-                {counts.fail} guests lỗi: {guests.filter(g => g.status === "fail").map(g => `${g.name} (${g.error})`).join(", ")}
-              </div>
-            )}
+            <strong>Hoàn tất batch · {okCount} thành công · {failCount} lỗi · 28/12/2025 09:42</strong>
+            {failCount > 0 && <div style={{ marginTop: 4, color: PMS.inkMuted }}>{failCount} guests lỗi: {failedNames}</div>}
             <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
-              {counts.fail > 0 && <Btn size="sm" variant="primary" icon="refresh">Re-run failed</Btn>}
+              {failCount > 0 && <Btn size="sm" variant="primary" icon="refresh">Re-run failed</Btn>}
               <Btn size="sm" icon="history" onClick={() => window.GO && window.GO(6)}>Xem chi tiết trong Activity Logs →</Btn>
             </div>
           </div>
@@ -1201,86 +1059,33 @@ function ScreenResolved() {
         </div>
       )}
 
-      {/* Stats banner */}
-      <div style={{ marginTop: bannerDismissed ? 0 : 12 }}>
-        <StatsBanner stats={[
-          { label: "Đã map",       value: counts.ok,   tone: "ok" },
-          { label: "Chưa map",     value: 0, tone: "neutral" },
-          { label: "Needs review", value: 0, tone: "neutral" },
-          { label: "Failed",       value: counts.fail, tone: "danger" },
-        ]}/>
-      </div>
-
-      {/* Quick actions */}
-      <div style={{
-        marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12,
-        background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, padding: "8px 10px"
-      }}>
-        <div style={{ fontSize: 12, color: PMS.inkMuted }}>
-          <strong style={{ color: PMS.ink }}>{counts.ok} / {data.guests.length}</strong> guests sẵn sàng Face ID check-in
-        </div>
-        <div style={{ display: "flex", gap: 6 }}>
-          <Btn size="sm" icon="upload" onClick={() => window.GO && window.GO(2)}>Upload thêm</Btn>
-          {counts.fail > 0 && <Btn size="sm" variant="primary" icon="refresh">↻ Re-run failed</Btn>}
-        </div>
-      </div>
-
-      {/* Guest list — resolved */}
-      <div style={{ marginTop: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, overflow: "hidden" }}>
-        <div style={{ maxHeight: 380, overflow: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-            <thead>
-              <tr style={{ background: PMS.surfaceMuted, color: PMS.inkMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.4, position: "sticky", top: 0 }}>
-                {["Conf. No", "Guest", "Face", "Status", ""].map((h, i) =>
-                  <th key={i} style={{ textAlign: "left", padding: "9px 12px", fontWeight: 500, borderBottom: `1px solid ${PMS.border}` }}>{h}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {guests.map((g) => (
-                <GuestRow key={g.confNo} guest={g} mode="resolved" file={g.file} status={g.status} onRetry={() => window.GO && window.GO(2)}/>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <FaceIdTabContent mode="resolved" onAction={(action) => {
+        if (action === "openUpload") window.GO && window.GO(2);
+        if (action === "retry") window.GO && window.GO(2);
+      }}/>
 
       <div style={{ marginTop: 12, fontSize: 11, color: PMS.inkSubtle, lineHeight: 1.7 }}>
-        <Icon name="lock" size={11}/> Time saved: ước tính ~80 phút so với register từng khách (18 × ~2.5 phút). bioId đã được lưu vào Profile.bioId. Audit log đầy đủ tại tab Activity Logs.
+        <Icon name="lock" size={11}/> Time saved ~80 phút so với register từng khách (18 × ~2.5 phút). bioId đã lưu vào Profile.bioId. Audit log đầy đủ tại tab Activity Logs.
       </div>
     </ItineraryShell>
   );
 }
-window.ScreenResolved = ScreenResolved;
-</script>
 
-<script type="text/babel">
-// SCREEN 06 — Activity Logs tab
+// ===== SCREEN 06 — Activity Logs tab =====
 function ScreenActivityLogs() {
   const data = window.PROTO_DATA;
   const [expanded, setExpanded] = React.useState(new Set(["log-005"]));
-
   const toggle = (id) => {
-    setExpanded(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
+    setExpanded(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   };
-
   const typeIcon = {
-    batch:   { icon: "scan",    color: PMS.brand },
-    manual:  { icon: "user",    color: PMS.accent },
-    revoke:  { icon: "trash",   color: PMS.danger },
-    consent: { icon: "lock",    color: PMS.warn },
-    open:    { icon: "folder",  color: PMS.inkMuted },
+    batch: { icon: "scan", color: PMS.brand },
+    manual: { icon: "user", color: PMS.accent },
+    revoke: { icon: "trash", color: PMS.danger },
+    consent: { icon: "lock", color: PMS.warn },
+    open: { icon: "folder", color: PMS.inkMuted },
   };
-  const typeLabel = {
-    batch: "Bulk batch",
-    manual: "Manual map",
-    revoke: "Revoke bioID",
-    consent: "PDPA consent",
-    open: "Itinerary opened",
-  };
+  const typeLabel = { batch: "Bulk batch", manual: "Manual map", revoke: "Revoke bioID", consent: "PDPA consent", open: "Itinerary opened" };
 
   return (
     <ItineraryShell activeTab="activity" onTabChange={(t) => t === "faceid" && window.GO && window.GO(1)}>
@@ -1292,19 +1097,15 @@ function ScreenActivityLogs() {
               Audit log đầy đủ theo NĐ 13/2023/NĐ-CP — Điều 26 · {data.activityLogs.length} entries
             </div>
           </div>
-          <div style={{ display: "flex", gap: 6 }}>
-            <Btn size="sm" icon="download2">Export CSV</Btn>
-          </div>
+          <Btn size="sm" icon="download2">Export CSV</Btn>
         </div>
         <div>
-          {data.activityLogs.map((log) => {
+          {data.activityLogs.map(log => {
             const meta = typeIcon[log.type];
             const isOpen = expanded.has(log.id);
             return (
               <div key={log.id} style={{ borderBottom: `1px solid ${PMS.border}` }}>
-                <div onClick={() => toggle(log.id)} style={{
-                  display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 14px", cursor: "pointer"
-                }}>
+                <div onClick={() => toggle(log.id)} style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 14px", cursor: "pointer" }}>
                   <div style={{ width: 32, height: 32, borderRadius: 6, background: meta.color + "15", color: meta.color, display: "grid", placeItems: "center", flexShrink: 0 }}>
                     <Icon name={meta.icon} size={16}/>
                   </div>
@@ -1354,7 +1155,6 @@ function ScreenActivityLogs() {
                               </tr>
                             );
                           })}
-                          {/* Unmapped files row */}
                           {data.pickedFiles.filter(f => f.status === "unmapped").map(f => (
                             <tr key={f.file} style={{ borderBottom: `1px solid ${PMS.border}`, background: PMS.bg }}>
                               <td style={{ padding: "5px 10px", color: PMS.inkSubtle }}>—</td>
@@ -1371,9 +1171,7 @@ function ScreenActivityLogs() {
                 )}
                 {isOpen && log.type !== "batch" && (
                   <div style={{ padding: "10px 14px 14px 58px", background: PMS.surfaceMuted, borderTop: `1px solid ${PMS.border}` }}>
-                    <pre style={{ margin: 0, fontSize: 11, color: PMS.ink, fontFamily: "ui-monospace, Menlo, monospace", whiteSpace: "pre-wrap" }}>
-{JSON.stringify(log.summary, null, 2)}
-                    </pre>
+                    <pre style={{ margin: 0, fontSize: 11, color: PMS.ink, fontFamily: "ui-monospace, Menlo, monospace", whiteSpace: "pre-wrap" }}>{JSON.stringify(log.summary, null, 2)}</pre>
                   </div>
                 )}
               </div>
@@ -1384,6 +1182,12 @@ function ScreenActivityLogs() {
     </ItineraryShell>
   );
 }
+
+window.ScreenDefault = ScreenDefault;
+window.ScreenUploadModal = ScreenUploadModal;
+window.ScreenReviewing = ScreenReviewing;
+window.ScreenProcessing = ScreenProcessing;
+window.ScreenResolved = ScreenResolved;
 window.ScreenActivityLogs = ScreenActivityLogs;
 </script>
 
@@ -1396,31 +1200,27 @@ const { useState, useEffect, useRef, useLayoutEffect } = React;
 
 const SCREENS = [
   { id: "s1", label: "01 · Default",          Component: ScreenDefault,       width: 1440, height: 980 },
-  { id: "s2", label: "02 · Upload + Match",   Component: ScreenUploading,     width: 1440, height: 900 },
+  { id: "s2", label: "02 · Upload modal",     Component: ScreenUploadModal,   width: 1440, height: 980 },
   { id: "s3", label: "03 · Reviewing",        Component: ScreenReviewing,     width: 1440, height: 1000 },
-  { id: "s4", label: "04 · Processing modal", Component: ScreenProcessing,    width: 1440, height: 900 },
+  { id: "s4", label: "04 · Processing modal", Component: ScreenProcessing,    width: 1440, height: 1000 },
   { id: "s5", label: "05 · Resolved",         Component: ScreenResolved,      width: 1440, height: 1000 },
   { id: "s6", label: "06 · Activity Logs",    Component: ScreenActivityLogs,  width: 1440, height: 980 },
 ];
 
 function App() {
   const [step, setStep] = useState(1);
-  const stageRef = useRef(null);
   const frameRef = useRef(null);
   const [scale, setScale] = useState(1);
 
   useEffect(() => {
-    window.GO = (n) => {
-      if (typeof n === "number" && n >= 1 && n <= SCREENS.length) setStep(n);
-    };
+    window.GO = (n) => { if (typeof n === "number" && n >= 1 && n <= SCREENS.length) setStep(n); };
   }, []);
 
   const current = SCREENS[step - 1];
 
   useLayoutEffect(() => {
     const compute = () => {
-      const frame = frameRef.current;
-      if (!frame) return;
+      const frame = frameRef.current; if (!frame) return;
       const rect = frame.getBoundingClientRect();
       const padding = 32;
       const sx = (rect.width  - padding) / current.width;
@@ -1446,27 +1246,20 @@ function App() {
   return (
     <>
       <div className="nav-bar">
-        <span className="title">v2 · Face ID Registration · Itinerary entry</span>
+        <span className="title">v2 · Face ID Registration · single shared list</span>
         {SCREENS.map((s, i) => (
-          <span key={s.id}
-                className={"step" + (i + 1 === step ? " active" : "")}
-                onClick={() => setStep(i + 1)}>
-            {s.label}
-          </span>
+          <span key={s.id} className={"step" + (i + 1 === step ? " active" : "")} onClick={() => setStep(i + 1)}>{s.label}</span>
         ))}
         <span className="hint">← → để chuyển màn hình</span>
-        <button className="icon" onClick={() => setStep((s) => Math.max(1, s - 1))} disabled={step === 1} title="Previous">
+        <button className="icon" onClick={() => setStep((s) => Math.max(1, s - 1))} disabled={step === 1}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18 9 12l6-6"/></svg>
         </button>
-        <button className="icon" onClick={() => setStep((s) => Math.min(SCREENS.length, s + 1))} disabled={step === SCREENS.length} title="Next">
+        <button className="icon" onClick={() => setStep((s) => Math.min(SCREENS.length, s + 1))} disabled={step === SCREENS.length}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </button>
       </div>
       <div className="app-frame" ref={frameRef}>
-        <div ref={stageRef}
-             className="stage"
-             style={{ width: current.width, height: current.height, transform: `scale(${scale})` }}
-             key={current.id}>
+        <div className="stage" style={{ width: current.width, height: current.height, transform: `scale(${scale})` }} key={current.id}>
           <current.Component/>
         </div>
       </div>
