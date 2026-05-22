@@ -672,6 +672,10 @@ function FaceIdTabContent({ mode, onAction, batchVersion, onToast }) {
       if (skippedGuestIds.has(g.profileId)) {
         return { guest: g, file: null, photoMapping: "skipped", regStatus: "unregistered" };
       }
+      // v2.2.3: In Default mode, ignore batch state entirely — every guest = Not Uploaded / Unregistered
+      if (mode === "default") {
+        return { guest: g, file: null, photoMapping: "not-uploaded", regStatus: "unregistered" };
+      }
       // Find file currently mapped to this guest
       const matchedFile = batchFiles.find(f => !skippedFileNames.has(f.file) && f.status === "matched" && f.match === g.profileId);
       if (matchedFile) {
@@ -1056,7 +1060,6 @@ function ScreenReviewing() {
           title={`Confirm & Register ${confirmModal.ready} photos`}
           body={<>You are about to register Face ID for <strong>{confirmModal.ready}</strong> guest{confirmModal.ready === 1 ? "" : "s"}. This will send biometric data to the Face ID system and cannot be undone in bulk — each guest must be removed individually if needed.</>}
           confirmLabel="Confirm"
-          danger={true}
           onCancel={() => setConfirmModal(null)}
           onConfirm={() => { setConfirmModal(null); window.GO && window.GO(4); }}
         />
@@ -1183,7 +1186,6 @@ function ScreenProcessing() {
           body="Are you sure you want to cancel the Face ID registration process? Some guests are still being processed. This action cannot be undone."
           confirmLabel="Confirm"
           cancelLabel="Cancel"
-          danger={true}
           onCancel={() => { setCancelModal(false); setPaused(false); }}
           onConfirm={() => { setCancelModal(false); window.GO && window.GO(3); }}
         />
