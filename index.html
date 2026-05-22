@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8"/>
-<title>Bulk Face ID Registration — Interactive Prototype</title>
+<title>Bulk Face ID Registration — Interactive Prototype (v2)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,6 +43,9 @@
   ::-webkit-scrollbar { width: 10px; height: 10px; }
   ::-webkit-scrollbar-thumb { background: #c9cfd6; border-radius: 999px; }
   ::-webkit-scrollbar-track { background: transparent; }
+
+  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1);} 50% { opacity: 0.35; transform: scale(0.7);} }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
@@ -50,45 +53,47 @@
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
 <script>
-// Mock data for the prototype
+// v2 mock data — guest-centric, confNo separate from profileId
 window.PROTO_DATA = {
   itinerary: {
     groupCode: "GRP-2025-1144",
+    itineraryNo: "ITN-2025-1144",
     groupName: "Vietravel Inbound — Hanoi Heritage Tour",
     company: "Vietravel JSC",
     arrival: "Dec 28, 2025",
     departure: "Dec 31, 2025",
     nights: 3,
     rooms: 18,
-    pax: 32,
+    pax: 18,
     status: "DEFINITE",
     sic: "Linh T. Pham",
     market: "FIT-INB",
     source: "TRA-AGT",
   },
-  // Profiles in the rooming list (matches some file names)
-  profiles: [
-    { id: "P-00481", name: "Nguyễn Thị Vân", room: "1208", type: "Adult", id_doc: "CCCD ✓", bioId: null },
-    { id: "P-00482", name: "Trần Văn An", room: "1208", type: "Adult", id_doc: "CCCD ✓", bioId: null },
-    { id: "P-00483", name: "Lê Hoàng Minh", room: "1209", type: "Adult", id_doc: "CCCD ✓", bioId: null },
-    { id: "P-00484", name: "Phạm Thu Hà", room: "1209", type: "Adult", id_doc: "CCCD ✓", bioId: null },
-    { id: "P-00485", name: "Đặng Quốc Bảo", room: "1210", type: "Adult", id_doc: "Passport ✓", bioId: null },
-    { id: "P-00486", name: "Hoàng Mai Anh", room: "1210", type: "Adult", id_doc: "CCCD ✓", bioId: null },
-    { id: "P-00487", name: "Vũ Đức Thành", room: "1211", type: "Adult", id_doc: "CCCD ✓", bioId: null },
-    { id: "P-00488", name: "Bùi Thanh Tâm", room: "1211", type: "Adult", id_doc: "CCCD ✓", bioId: null },
-    { id: "P-00489", name: "Ngô Khánh Linh", room: "1212", type: "Adult", id_doc: "CCCD ✓", bioId: null },
-    { id: "P-00490", name: "Đỗ Thị Hồng", room: "1212", type: "Adult", id_doc: "CCCD ✓", bioId: null },
-    { id: "P-00491", name: "Trương Văn A", room: "1215", type: "Adult", id_doc: "CCCD ✓", bioId: null },
-    { id: "P-00492", name: "Trương Văn A", room: "1216", type: "Adult", id_doc: "CCCD ✓", bioId: null }, // duplicate name
-    { id: "P-00493", name: "Lý Quốc Khánh", room: "1217", type: "Adult", id_doc: "CCCD ✓", bioId: null },
-    { id: "P-00494", name: "Mai Thị Lan", room: "1218", type: "Adult", id_doc: "CCCD ✓", bioId: null },
-    { id: "P-00495", name: "Nguyễn Hữu Phước", room: "1219", type: "Adult", id_doc: "CCCD ✓", bioId: null },
-    { id: "P-00496", name: "Phan Thị Mỹ Duyên", room: "1220", type: "Adult", id_doc: "CCCD ✓", bioId: null },
-    { id: "P-00497", name: "Hồ Văn Quý", room: "1221", type: "Adult", id_doc: "CCCD ✓", bioId: null },
-    { id: "P-00498", name: "Lâm Thanh Tùng", room: "1222", type: "Adult", id_doc: "CCCD ✓", bioId: null },
+  // 18 guests; confNo is reservation-level (distinct from profileId)
+  guests: [
+    { confNo: "CNF-25-1144-01", profileId: "P-00481", name: "Nguyễn Thị Vân",     room: "1208" },
+    { confNo: "CNF-25-1144-02", profileId: "P-00482", name: "Trần Văn An",         room: "1208" },
+    { confNo: "CNF-25-1144-03", profileId: "P-00483", name: "Lê Hoàng Minh",       room: "1209" },
+    { confNo: "CNF-25-1144-04", profileId: "P-00484", name: "Phạm Thu Hà",         room: "1209" },
+    { confNo: "CNF-25-1144-05", profileId: "P-00485", name: "Đặng Quốc Bảo",       room: "1210" },
+    { confNo: "CNF-25-1144-06", profileId: "P-00486", name: "Hoàng Mai Anh",       room: "1210" },
+    { confNo: "CNF-25-1144-07", profileId: "P-00487", name: "Vũ Đức Thành",        room: "1211" },
+    { confNo: "CNF-25-1144-08", profileId: "P-00488", name: "Bùi Thanh Tâm",       room: "1211" },
+    { confNo: "CNF-25-1144-09", profileId: "P-00489", name: "Ngô Khánh Linh",      room: "1212" },
+    { confNo: "CNF-25-1144-10", profileId: "P-00490", name: "Đỗ Thị Hồng",         room: "1212" },
+    { confNo: "CNF-25-1144-11", profileId: "P-00491", name: "Trương Văn A",        room: "1215" },
+    { confNo: "CNF-25-1144-12", profileId: "P-00492", name: "Trương Văn A",        room: "1216" },
+    { confNo: "CNF-25-1144-13", profileId: "P-00493", name: "Lý Quốc Khánh",       room: "1217" },
+    { confNo: "CNF-25-1144-14", profileId: "P-00494", name: "Mai Thị Lan",         room: "1218" },
+    { confNo: "CNF-25-1144-15", profileId: "P-00495", name: "Nguyễn Hữu Phước",    room: "1219" },
+    { confNo: "CNF-25-1144-16", profileId: "P-00496", name: "Phan Thị Mỹ Duyên",   room: "1220" },
+    { confNo: "CNF-25-1144-17", profileId: "P-00497", name: "Hồ Văn Quý",          room: "1221" },
+    { confNo: "CNF-25-1144-18", profileId: "P-00498", name: "Lâm Thanh Tùng",      room: "1222" },
   ],
-  // Files extracted from the uploaded ZIP
-  uploadedFiles: [
+  // 20 files picked by user; auto-match outcome is precomputed for demo
+  // matches profileId for "matched"; for "ambiguous" matches is an array of candidate profileIds; for "unmapped" matches is null
+  pickedFiles: [
     { file: "1744 Nguyen Thi Van.jpg",      size: "412 KB", normalized: "nguyenthivan",   match: "P-00481", status: "matched" },
     { file: "1745 Tran Van An.jpg",         size: "388 KB", normalized: "tranvanan",      match: "P-00482", status: "matched" },
     { file: "le hoang minh.png",            size: "501 KB", normalized: "lehoangminh",    match: "P-00483", status: "matched" },
@@ -99,28 +104,94 @@ window.PROTO_DATA = {
     { file: "Bui Thanh Tam.jpeg",           size: "455 KB", normalized: "buithanhtam",    match: "P-00488", status: "matched" },
     { file: "ngo khanh linh.jpg",           size: "380 KB", normalized: "ngokhanhlinh",   match: "P-00489", status: "matched" },
     { file: "Do Thi Hong.jpg",              size: "412 KB", normalized: "dothihong",      match: "P-00490", status: "matched" },
-    // ambiguous (duplicate names)
     { file: "Truong Van A.jpg",             size: "398 KB", normalized: "truongvana",     match: ["P-00491", "P-00492"], status: "ambiguous" },
-    // unmapped
-    { file: "1758 Nguyen Khanh.jpg",        size: "445 KB", normalized: "nguyenkhanh",    match: null,    status: "unmapped" },
-    { file: "phamthuyduong.jpg",            size: "402 KB", normalized: "phamthuyduong",  match: null,    status: "unmapped" },
-    { file: "IMG_20251228_093412.jpg",      size: "1.2 MB", normalized: "img20251228093412", match: null, status: "unmapped" },
     { file: "ly quoc khanh.jpg",            size: "390 KB", normalized: "lyquockhanh",    match: "P-00493", status: "matched" },
     { file: "mai thi lan.jpg",              size: "410 KB", normalized: "maithilan",      match: "P-00494", status: "matched" },
     { file: "nguyen huu phuoc.jpg",         size: "388 KB", normalized: "nguyenhuuphuoc", match: "P-00495", status: "matched" },
     { file: "phan thi my duyen.jpg",        size: "425 KB", normalized: "phanthimyduyen", match: "P-00496", status: "matched" },
-    // failed at API stage (used in result)
     { file: "ho van quy.jpg",               size: "1.8 MB", normalized: "hovanquy",       match: "P-00497", status: "matched" },
     { file: "lam thanh tung.jpg",           size: "402 KB", normalized: "lamthanhtung",   match: "P-00498", status: "matched" },
+    // 3 unmapped files (no match in roster)
+    { file: "1758 Nguyen Khanh.jpg",        size: "445 KB", normalized: "nguyenkhanh",    match: null,    status: "unmapped" },
+    { file: "IMG_20251228_093412.jpg",      size: "1.2 MB", normalized: "img20251228093412", match: null, status: "unmapped" },
+    { file: "phamthuyduong.jpg",            size: "402 KB", normalized: "phamthuyduong",  match: null,    status: "unmapped" },
+  ],
+  // Processing outcomes per guest (used in Resolved + Processing screens)
+  // 16 ok, 2 fail
+  outcomes: {
+    "P-00481": { status: "ok",   bioId: "BIO-7C4A91" },
+    "P-00482": { status: "ok",   bioId: "BIO-7C4A92" },
+    "P-00483": { status: "ok",   bioId: "BIO-7C4A93" },
+    "P-00484": { status: "ok",   bioId: "BIO-7C4A94" },
+    "P-00485": { status: "ok",   bioId: "BIO-7C4A95" },
+    "P-00486": { status: "ok",   bioId: "BIO-7C4A96" },
+    "P-00487": { status: "ok",   bioId: "BIO-7C4A97" },
+    "P-00488": { status: "ok",   bioId: "BIO-7C4A98" },
+    "P-00489": { status: "ok",   bioId: "BIO-7C4A99" },
+    "P-00490": { status: "ok",   bioId: "BIO-7C4A9A" },
+    "P-00491": { status: "ok",   bioId: "BIO-7C4A9B" },
+    "P-00492": { status: "ok",   bioId: "BIO-7C4A9C" },
+    "P-00493": { status: "ok",   bioId: "BIO-7C4A9D" },
+    "P-00494": { status: "ok",   bioId: "BIO-7C4A9E" },
+    "P-00495": { status: "ok",   bioId: "BIO-7C4A9F" },
+    "P-00496": { status: "ok",   bioId: "BIO-7C4AA0" },
+    "P-00497": { status: "fail", error: "LOW_QUALITY",    hint: "Ảnh quá mờ — yêu cầu khách gửi ảnh khác" },
+    "P-00498": { status: "fail", error: "MULTIPLE_FACES", hint: "Phát hiện 2 khuôn mặt — crop lại" },
+  },
+  // Activity logs — most recent first
+  activityLogs: [
+    {
+      id: "log-005",
+      type: "batch",
+      timestamp: "2025-12-28 09:42:16",
+      actor: "phuong.nv",
+      actorIp: "10.18.4.27",
+      summary: { totalFiles: 20, ok: 16, fail: 2, skipped: 2, durationSec: 12.4 },
+      detail: "Bulk batch · 20 files uploaded · 16 bioId tạo · 2 fail (LOW_QUALITY, MULTIPLE_FACES) · 2 unmapped files skip",
+    },
+    {
+      id: "log-004",
+      type: "manual",
+      timestamp: "2025-12-27 17:45:02",
+      actor: "phuong.nv",
+      actorIp: "10.18.4.27",
+      summary: { guest: "Nguyễn Văn Z", bioId: "BIO-7C4A8E" },
+      detail: "Individual register · guest Nguyễn Văn Z (P-00479) · bioId BIO-7C4A8E",
+    },
+    {
+      id: "log-003",
+      type: "revoke",
+      timestamp: "2025-12-26 09:12:33",
+      actor: "linh.tp",
+      actorIp: "10.18.4.5",
+      summary: { guest: "Trần Thị B", reason: "Re-registration after photo update" },
+      detail: "Revoke bioId BIO-7C4A29 cho guest Trần Thị B (P-00475) — reason: re-registration",
+    },
+    {
+      id: "log-002",
+      type: "consent",
+      timestamp: "2025-12-25 14:18:09",
+      actor: "phuong.nv",
+      actorIp: "10.18.4.27",
+      summary: { scope: "group", method: "tour-operator-email" },
+      detail: "PDPA consent confirmed cho cả đoàn — source: tour operator email attachment",
+    },
+    {
+      id: "log-001",
+      type: "open",
+      timestamp: "2025-12-25 14:17:42",
+      actor: "phuong.nv",
+      actorIp: "10.18.4.27",
+      summary: { itinerary: "GRP-2025-1144" },
+      detail: "Itinerary GRP-2025-1144 opened",
+    },
   ],
 };
-
 </script>
-<script type="text/babel">
-// Shared PMS shell, tokens, and small UI atoms
 
+<script type="text/babel">
+// Shared shell tokens + atoms (carried over from v1, unchanged)
 const PMS = {
-  // Color tokens — original neutral PMS palette (not copying any vendor)
   bg: "#F4F6F8",
   surface: "#FFFFFF",
   surfaceMuted: "#FAFBFC",
@@ -140,10 +211,8 @@ const PMS = {
   ok: "#137A4D",
   okSoft: "#E2F1E9"
 };
-
 const pms = PMS;
 
-// Small inline icon set (line icons, original)
 const Icon = ({ name, size = 16, stroke = "currentColor" }) => {
   const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke, strokeWidth: 1.6, strokeLinecap: "round", strokeLinejoin: "round" };
   const paths = {
@@ -159,7 +228,6 @@ const Icon = ({ name, size = 16, stroke = "currentColor" }) => {
     upload: <><path d="M12 16V4M6 10l6-6 6 6" /><path d="M4 20h16" /></>,
     download: <><path d="M12 4v12M6 10l6 6 6-6" /><path d="M4 20h16" /></>,
     file: <><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /></>,
-    zip: <><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M11 12v5M9 12h4M9 14h4M9 16h4" /></>,
     image: <><rect x="3" y="5" width="18" height="14" rx="1.5" /><circle cx="8" cy="10" r="1.5" /><path d="m21 16-5-5-9 9" /></>,
     check: <><path d="m5 13 4 4L19 7" /></>,
     x: <><path d="m6 6 12 12M18 6 6 18" /></>,
@@ -183,15 +251,12 @@ const Icon = ({ name, size = 16, stroke = "currentColor" }) => {
     eye: <><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></>,
     download2: <><path d="M12 3v12M7 10l5 5 5-5" /><path d="M5 21h14" /></>,
     send: <><path d="m4 4 16 8-16 8 3-8-3-8z" /></>,
-    star: <><path d="m12 3 2.6 5.6 6.1.6-4.6 4.2 1.3 6L12 16.6 6.6 19.4l1.3-6L3.3 9.2l6.1-.6L12 3z" /></>,
-    bookmark: <><path d="M6 3h12v18l-6-4-6 4V3z" /></>,
+    history: <><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v5h5" /><path d="M12 7v5l3 2" /></>,
     folder: <><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" /></>,
-    history: <><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v5h5" /><path d="M12 7v5l3 2" /></>
   };
   return <svg {...common}>{paths[name]}</svg>;
 };
 
-// Top bar of the PMS
 const TopBar = ({ propertyName = "Vinpearl Hanoi (HND)", user = "phuong.nv" }) =>
 <div style={{
   height: 48, background: pms.surface, borderBottom: `1px solid ${pms.border}`,
@@ -233,17 +298,16 @@ const TopBar = ({ propertyName = "Vinpearl Hanoi (HND)", user = "phuong.nv" }) =
     </div>
   </div>;
 
-
 const SideNav = ({ active = "groups" }) => {
   const items = [
-  { key: "dashboard", label: "Dashboard", icon: "home" },
-  { key: "reservations", label: "Reservations", icon: "calendar" },
-  { key: "groups", label: "Group Reservation", icon: "users" },
-  { key: "rooms", label: "Room Plan", icon: "door" },
-  { key: "billing", label: "Billing", icon: "cash" },
-  { key: "reports", label: "Reports", icon: "chart" },
-  { key: "settings", label: "Settings", icon: "settings" }];
-
+    { key: "dashboard", label: "Dashboard", icon: "home" },
+    { key: "reservations", label: "Reservations", icon: "calendar" },
+    { key: "groups", label: "Group Reservation", icon: "users" },
+    { key: "rooms", label: "Room Plan", icon: "door" },
+    { key: "billing", label: "Billing", icon: "cash" },
+    { key: "reports", label: "Reports", icon: "chart" },
+    { key: "settings", label: "Settings", icon: "settings" }
+  ];
   return (
     <div style={{
       width: 188, background: pms.surface, borderRight: `1px solid ${pms.border}`,
@@ -261,13 +325,11 @@ const SideNav = ({ active = "groups" }) => {
             <Icon name={it.icon} size={15} />
             {it.label}
           </div>);
-
       })}
       <div style={{ marginTop: "auto", padding: 8, fontSize: 11, color: pms.inkSubtle, borderTop: `1px solid ${pms.border}` }}>
         v3.14.2 · build 2812
       </div>
     </div>);
-
 };
 
 const Crumb = ({ items }) =>
@@ -280,8 +342,6 @@ const Crumb = ({ items }) =>
   )}
   </div>;
 
-
-// Status pill matching CiHMS feel
 const StatusPill = ({ tone = "neutral", children, dot = true }) => {
   const m = {
     neutral: { bg: "#EEF1F4", fg: pms.ink, dot: pms.inkSubtle },
@@ -299,16 +359,15 @@ const StatusPill = ({ tone = "neutral", children, dot = true }) => {
       {dot && <span style={{ width: 6, height: 6, borderRadius: "50%", background: m.dot }} />}
       {children}
     </span>);
-
 };
 
 const Btn = ({ variant = "default", icon, children, onClick, disabled, size = "md", style = {} }) => {
   const variants = {
-    primary: { bg: pms.brand, fg: "#fff", border: pms.brand, hover: "#0c4d76" },
-    default: { bg: pms.surface, fg: pms.ink, border: pms.borderStrong, hover: pms.surfaceMuted },
-    ghost: { bg: "transparent", fg: pms.inkMuted, border: "transparent", hover: pms.surfaceMuted },
-    danger: { bg: pms.surface, fg: pms.danger, border: pms.borderStrong, hover: pms.dangerSoft },
-    success: { bg: pms.accent, fg: "#fff", border: pms.accent, hover: "#0a6151" }
+    primary: { bg: pms.brand, fg: "#fff", border: pms.brand },
+    default: { bg: pms.surface, fg: pms.ink, border: pms.borderStrong },
+    ghost: { bg: "transparent", fg: pms.inkMuted, border: "transparent" },
+    danger: { bg: pms.surface, fg: pms.danger, border: pms.borderStrong },
+    success: { bg: pms.accent, fg: "#fff", border: pms.accent }
   }[variant];
   const pad = size === "sm" ? "4px 10px" : size === "lg" ? "9px 18px" : "6px 14px";
   const fs = size === "sm" ? 12 : size === "lg" ? 14 : 13;
@@ -322,7 +381,6 @@ const Btn = ({ variant = "default", icon, children, onClick, disabled, size = "m
       {icon && <Icon name={icon} size={fs} />}
       {children}
     </button>);
-
 };
 
 const Card = ({ title, subtitle, actions, children, padding = 16, style = {} }) =>
@@ -345,7 +403,6 @@ const Card = ({ title, subtitle, actions, children, padding = 16, style = {} }) 
     <div style={{ padding }}>{children}</div>
   </div>;
 
-
 const Field = ({ label, children, hint }) =>
 <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
     <div style={{ fontSize: 11, fontWeight: 500, color: pms.inkMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>{label}</div>
@@ -353,24 +410,21 @@ const Field = ({ label, children, hint }) =>
     {hint && <div style={{ fontSize: 11, color: pms.inkSubtle }}>{hint}</div>}
   </div>;
 
-
-// Avatar circle with initials fallback (or face placeholder)
 const FacePlaceholder = ({ size = 36, name = "", state = "default" }) => {
-  // Generate stable color from name
   const palette = [
-  ["#E6F0F7", "#0F5A8A"],
-  ["#FBEFE0", "#B6601B"],
-  ["#E2F2EE", "#0E7C66"],
-  ["#FBE8E5", "#B0372F"],
-  ["#EEEAF7", "#5A3D9E"],
-  ["#F2EAE0", "#7A5530"]];
-
+    ["#E6F0F7", "#0F5A8A"],
+    ["#FBEFE0", "#B6601B"],
+    ["#E2F2EE", "#0E7C66"],
+    ["#FBE8E5", "#B0372F"],
+    ["#EEEAF7", "#5A3D9E"],
+    ["#F2EAE0", "#7A5530"]
+  ];
   let h = 0;
   for (let i = 0; i < name.length; i++) h = h * 31 + name.charCodeAt(i) | 0;
   const [bg, fg] = palette[Math.abs(h) % palette.length];
   const initials = name.split(/\s+/).filter(Boolean).slice(-2).map((s) => s[0]).join("").toUpperCase() || "?";
 
-  if (state === "missing") {
+  if (state === "missing" || state === "empty") {
     return (
       <div style={{
         width: size, height: size, borderRadius: 4, background: "#F4F6F8",
@@ -379,9 +433,7 @@ const FacePlaceholder = ({ size = 36, name = "", state = "default" }) => {
       }}>
         <Icon name="image" size={size * 0.5} />
       </div>);
-
   }
-
   return (
     <div style={{
       width: size, height: size, borderRadius: 4, background: bg, color: fg,
@@ -396,7 +448,6 @@ const FacePlaceholder = ({ size = 36, name = "", state = "default" }) => {
         color: fg, opacity: 0.55, letterSpacing: 0.3
       }}>{initials}</span>
     </div>);
-
 };
 
 window.PMS = PMS;
@@ -410,54 +461,20 @@ window.Card = Card;
 window.Field = Field;
 window.FacePlaceholder = FacePlaceholder;
 </script>
+
 <script type="text/babel">
-// Screen 1: Itinerary detail page with the new "Bulk Face ID Registration" entry point
-function ScreenItinerary() {
-  const data = window.PROTO_DATA;
-  const it = data.itinerary;
-  const [tab, setTab] = React.useState("rooming");
-  // "before" = lễ tân chưa chạy bulk; "after" = đã chạy bulk xong (16/18 thành công)
-  const [phase, setPhase] = React.useState("before");
-
-  const registeredCount = phase === "before" ? 0 : 16;
-  const totalProfiles = data.profiles.length;
-  const pct = Math.round(registeredCount / totalProfiles * 100);
-
-  // Profile IDs đã có Face ID sau khi chạy bulk (16 / 18 — khớp screen 5)
-  const registeredIds = new Set([
-    "P-00481", "P-00482", "P-00483", "P-00484", "P-00485", "P-00486",
-    "P-00487", "P-00488", "P-00489", "P-00490", "P-00492", "P-00493",
-    "P-00494", "P-00495", "P-00496", "P-00498",
-  ]);
-
+// Itinerary shell — header card + 4 tabs (Itinerary info / Room List / Face ID Registration / Activity Logs)
+// activeTab default = "faceid" (v2 entry point)
+function ItineraryShell({ activeTab = "faceid", onTabChange, children, headerBadge }) {
+  const it = window.PROTO_DATA.itinerary;
+  const setTab = onTabChange || (() => {});
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: PMS.bg, fontFamily: 'Inter, -apple-system, "Segoe UI", sans-serif', color: PMS.ink, position: "relative" }}>
       <TopBar/>
-
-      {/* Demo state toggle (shows reviewers the before/after impact) */}
-      <div style={{
-        position: "absolute", top: 56, right: 18, zIndex: 30,
-        display: "flex", alignItems: "center", gap: 6,
-        background: "#11202E", color: "#fff", padding: "5px 5px 5px 10px", borderRadius: 999,
-        fontSize: 11, boxShadow: "0 4px 12px rgba(17,32,46,0.2)",
-      }}>
-        <span style={{ opacity: 0.8 }}>Demo state:</span>
-        {[
-          ["before", "Trước khi chạy"],
-          ["after", "Sau khi chạy bulk"],
-        ].map(([k, l]) => (
-          <button key={k} onClick={() => setPhase(k)} style={{
-            border: "none", padding: "3px 9px", borderRadius: 999, fontSize: 11, cursor: "pointer",
-            background: phase === k ? "#fff" : "transparent",
-            color: phase === k ? "#11202E" : "#fff", fontWeight: 600, fontFamily: "inherit",
-          }}>{l}</button>
-        ))}
-      </div>
-
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
         <SideNav active="groups"/>
-        <div style={{ flex: 1, overflow: "auto", padding: "14px 18px 18px" }}>
-          <Crumb items={["Front Office", "Group Reservation", `${it.groupCode} — ${it.groupName}`]}/>
+        <div style={{ flex: 1, overflow: "auto", padding: "14px 18px 18px", position: "relative" }}>
+          <Crumb items={["Front Office", "Group Reservation", `${it.itineraryNo} — ${it.groupName}`]}/>
 
           {/* Header card */}
           <div style={{
@@ -468,25 +485,17 @@ function ScreenItinerary() {
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <div style={{ fontSize: 18, fontWeight: 700, color: PMS.ink }}>{it.groupName}</div>
                   <StatusPill tone="ok">{it.status}</StatusPill>
-                  {phase === "after" && (
-                    <StatusPill tone="accent">
-                      <Icon name="face" size={11}/> Face ID sẵn sàng check-in
-                    </StatusPill>
-                  )}
+                  {headerBadge}
                 </div>
                 <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 3 }}>
-                  {it.groupCode} · {it.company} · SIC: {it.sic}
+                  {it.itineraryNo} · {it.groupCode} · {it.company} · SIC: {it.sic}
                 </div>
               </div>
               <div style={{ display: "flex", gap: 6 }}>
                 <Btn icon="edit">Edit details</Btn>
                 <Btn icon="download">Export rooming list</Btn>
-                <Btn icon="scan" onClick={() => window.GO && window.GO(2)}>
-                  Đăng ký Face ID hàng loạt
-                </Btn>
               </div>
             </div>
-
             <div style={{
               display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 16,
               marginTop: 14, paddingTop: 14, borderTop: `1px solid ${PMS.border}`,
@@ -501,16 +510,15 @@ function ScreenItinerary() {
             </div>
           </div>
 
-          {/* Tabs */}
+          {/* Tabs — Face ID Registration default active */}
           <div style={{ marginTop: 14, display: "flex", gap: 4, borderBottom: `1px solid ${PMS.border}` }}>
             {[
-              ["overview", "Overview"],
-              ["reservations", "Reservations"],
-              ["rooming", "Rooming List"],
-              ["billing", "Billing"],
-              ["activity", "Activity Log"],
+              ["info",     "Itinerary info"],
+              ["rooms",    "Room List"],
+              ["faceid",   "Face ID Registration"],
+              ["activity", "Activity Logs"],
             ].map(([k, l]) => {
-              const active = k === tab;
+              const active = k === activeTab;
               return (
                 <div key={k} onClick={() => setTab(k)} style={{
                   padding: "8px 14px", fontSize: 13, fontWeight: active ? 600 : 500,
@@ -522,1071 +530,863 @@ function ScreenItinerary() {
             })}
           </div>
 
-          {/* Rooming list table */}
-          <Card style={{ marginTop: 12 }}
-            title="Rooming List"
-            subtitle={`${totalProfiles} khách trong đoàn · ${registeredCount} / ${totalProfiles} đã có Face ID`}
-            actions={<>
-              <StatusPill tone={phase === "after" ? "ok" : "warn"}>
-                Face ID: {pct}% hoàn tất
-              </StatusPill>
-              <Btn size="sm" icon="upload">Import CSV</Btn>
-            </>}
-            padding={0}
-          >
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-              <thead>
-                <tr style={{ background: PMS.surfaceMuted, color: PMS.inkMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.4 }}>
-                  {["Profile ID", "Họ và tên", "Phòng", "Loại", "Giấy tờ", "Face ID", ""].map((h, i) => (
-                    <th key={i} style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, borderBottom: `1px solid ${PMS.border}` }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {data.profiles.slice(0, 12).map((p, i) => {
-                  const hasFaceId = phase === "after" && registeredIds.has(p.id);
-                  const failed = phase === "after" && (p.id === "P-00497" || p.id === "P-00491");
-                  return (
-                    <tr key={p.id} style={{ borderBottom: `1px solid ${PMS.border}` }}>
-                      <td style={{ padding: "8px 12px", color: PMS.inkMuted, fontFamily: "ui-monospace, Menlo, monospace", fontSize: 11 }}>{p.id}</td>
-                      <td style={{ padding: "8px 12px", color: PMS.ink, fontWeight: 500 }}>{p.name}</td>
-                      <td style={{ padding: "8px 12px" }}>{p.room}</td>
-                      <td style={{ padding: "8px 12px", color: PMS.inkMuted }}>{p.type}</td>
-                      <td style={{ padding: "8px 12px" }}><span style={{ color: PMS.ok }}>{p.id_doc}</span></td>
-                      <td style={{ padding: "8px 12px" }}>
-                        {hasFaceId && <StatusPill tone="ok"><Icon name="face" size={10}/> Đã đăng ký</StatusPill>}
-                        {failed && <StatusPill tone="danger">Cần xử lý</StatusPill>}
-                        {!hasFaceId && !failed && <StatusPill tone="warn" dot={false}>Chưa đăng ký</StatusPill>}
-                      </td>
-                      <td style={{ padding: "8px 12px", textAlign: "right", color: PMS.inkSubtle }}><Icon name="chevronRight" size={14}/></td>
-                    </tr>
-                  );
-                })}
-                <tr>
-                  <td colSpan={7} style={{ padding: "8px 12px", fontSize: 11, color: PMS.inkSubtle, textAlign: "center" }}>
-                    + {totalProfiles - 12} dòng khác…
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </Card>
-
-          {/* Helper banner */}
-          {phase === "before" ? (
-            <div style={{
-              marginTop: 12, padding: "10px 12px", borderRadius: 6, background: PMS.brandSoft,
-              border: `1px solid #BBD4E5`, display: "flex", gap: 10, alignItems: "flex-start",
-            }}>
-              <div style={{ color: PMS.brand, marginTop: 1 }}><Icon name="info" size={16}/></div>
-              <div style={{ fontSize: 12, color: PMS.ink, lineHeight: 1.55 }}>
-                <strong>Tính năng mới:</strong> Đăng ký Face ID cho cả đoàn cùng lúc bằng 1 file ZIP ảnh chân dung.
-                Hệ thống tự ghép tên file với khách trong rooming list, tiết kiệm thời gian so với đăng ký từng khách.
-              </div>
-            </div>
-          ) : (
-            <div style={{
-              marginTop: 12, padding: "10px 12px", borderRadius: 6, background: PMS.okSoft,
-              border: `1px solid #BFE0CF`, display: "flex", gap: 10, alignItems: "flex-start",
-            }}>
-              <div style={{ color: PMS.ok, marginTop: 1 }}><Icon name="check" size={16}/></div>
-              <div style={{ fontSize: 12, color: PMS.ink, lineHeight: 1.55, flex: 1 }}>
-                <strong>16/18 khách đã đăng ký Face ID xong.</strong> Đoàn sẵn sàng check-in nhanh bằng nhận diện khuôn mặt.
-                Còn 2 khách thất bại (ảnh mờ / nhiều khuôn mặt) — cần xử lý lại.
-              </div>
-              <Btn size="sm" onClick={() => window.GO && window.GO(5)}>Xem báo cáo</Btn>
-            </div>
-          )}
+          {/* Tab content */}
+          <div style={{ marginTop: 12 }}>{children}</div>
         </div>
       </div>
     </div>
   );
 }
 
-window.ScreenItinerary = ScreenItinerary;
-
+window.ItineraryShell = ItineraryShell;
 </script>
+
 <script type="text/babel">
-// Screen 2: Upload modal — drop ZIP, validate, parse
-function ScreenUpload() {
-  const [stage, setStage] = React.useState("idle"); // idle | dragging | uploading | parsing | done
+// Stats banner shared across Default / Reviewing / Resolved
+function StatsBanner({ stats }) {
+  // stats = [{label, value, tone}]
+  return (
+    <div style={{
+      background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6,
+      display: "grid", gridTemplateColumns: `repeat(${stats.length}, 1fr)`, overflow: "hidden"
+    }}>
+      {stats.map((s, i) => {
+        const color = s.tone === "ok" ? PMS.ok : s.tone === "warn" ? PMS.warn : s.tone === "danger" ? PMS.danger : PMS.ink;
+        return (
+          <div key={i} style={{
+            padding: "12px 14px",
+            borderRight: i < stats.length - 1 ? `1px solid ${PMS.border}` : "none",
+            display: "flex", flexDirection: "column", gap: 4
+          }}>
+            <div style={{ fontSize: 11, color: PMS.inkMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>{s.label}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color }}>{s.value}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Guest-centric row renderer — modes: default | reviewing | resolved
+function GuestRow({ guest, mode, file, status, candidates, profilesById, onPickFile, onSkip, onRetry }) {
+  // status: "unmapped" | "matched" | "ambiguous" | "no-photo" | "ok" | "fail"
+  // file: { file, size } if any
+  // candidates: [profileId] for ambiguous; here it's reverse — files candidates for this guest
+  const isResolvedOk = mode === "resolved" && status === "ok";
+  const isResolvedFail = mode === "resolved" && status === "fail";
+  const isReviewingMapped = mode === "reviewing" && status === "matched";
+  const isReviewingAmbig = mode === "reviewing" && status === "ambiguous";
+  const isReviewingNoPhoto = mode === "reviewing" && status === "no-photo";
+  const isDefaultUnmapped = mode === "default";
+
+  // Status pill content
+  const statusPill = (() => {
+    if (isResolvedOk) return <StatusPill tone="ok"><Icon name="check" size={10}/> Đã map</StatusPill>;
+    if (isResolvedFail) return <StatusPill tone="danger">✗ {guest.error || "Failed"}</StatusPill>;
+    if (isReviewingMapped) return <StatusPill tone="ok">✓ Mapped</StatusPill>;
+    if (isReviewingAmbig) return <StatusPill tone="warn">⚠ Needs review</StatusPill>;
+    if (isReviewingNoPhoto) return <StatusPill tone="neutral" dot={false}>Chưa có ảnh</StatusPill>;
+    return <StatusPill tone="warn" dot={false}>Chưa map</StatusPill>;
+  })();
+
+  // Face cell content
+  const faceCell = (() => {
+    if (file && (isResolvedOk || isReviewingMapped || isReviewingAmbig)) {
+      return <FacePlaceholder size={36} name={file.file.replace(/\.[a-z]+$/i, "")} />;
+    }
+    if (isResolvedFail && file) {
+      return (
+        <div style={{ position: "relative" }}>
+          <FacePlaceholder size={36} name={file.file.replace(/\.[a-z]+$/i, "")} />
+          <div style={{
+            position: "absolute", inset: 0, background: "rgba(176,55,47,0.18)", borderRadius: 4,
+            display: "grid", placeItems: "center", color: PMS.danger
+          }}>
+            <Icon name="warn" size={16}/>
+          </div>
+        </div>
+      );
+    }
+    return <FacePlaceholder size={36} name="?" state="missing" />;
+  })();
+
+  return (
+    <tr style={{ borderBottom: `1px solid ${PMS.border}` }}>
+      <td style={{ padding: "8px 12px", color: PMS.inkMuted, fontFamily: "ui-monospace, Menlo, monospace", fontSize: 11 }}>
+        {guest.confNo}
+      </td>
+      <td style={{ padding: "8px 12px", color: PMS.ink, fontWeight: 500 }}>
+        {guest.name}
+        <div style={{ fontSize: 10, color: PMS.inkSubtle, fontFamily: "ui-monospace, Menlo, monospace" }}>
+          {guest.profileId} · Room {guest.room}
+        </div>
+      </td>
+      <td style={{ padding: "8px 12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {faceCell}
+          {file && (
+            <div style={{ minWidth: 0, fontSize: 11, color: PMS.inkSubtle, fontFamily: "ui-monospace, Menlo, monospace", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 180 }}>
+              {file.file}
+            </div>
+          )}
+          {isReviewingAmbig && (
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 6px", borderRadius: 3, background: PMS.warnSoft, color: PMS.warn, fontSize: 11 }}>
+              <Icon name="chevronDown" size={11}/> 2 matches
+            </div>
+          )}
+        </div>
+      </td>
+      <td style={{ padding: "8px 12px" }}>{statusPill}</td>
+      <td style={{ padding: "8px 12px", textAlign: "right" }}>
+        {isReviewingAmbig && <Btn size="sm" variant="ghost" icon="check">Pick this</Btn>}
+        {isReviewingNoPhoto && <Btn size="sm" variant="ghost" icon="plus">Gán ảnh</Btn>}
+        {isResolvedFail && <Btn size="sm" variant="ghost" icon="refresh" onClick={onRetry}>Re-try</Btn>}
+        {(isReviewingMapped || isResolvedOk) && <Icon name="chevronRight" size={14} stroke={PMS.inkSubtle}/>}
+      </td>
+    </tr>
+  );
+}
+
+// PDPA consent inline bar
+function PdpaConsent({ checked, onChange }) {
+  return (
+    <div style={{
+      padding: "10px 12px", borderRadius: 6, background: PMS.warnSoft, border: `1px solid #EBC79A`,
+      display: "flex", gap: 10, alignItems: "flex-start"
+    }}>
+      <div style={{ color: PMS.warn, marginTop: 1 }}><Icon name="lock" size={16}/></div>
+      <label style={{ fontSize: 12, color: PMS.ink, lineHeight: 1.55, flex: 1, cursor: "pointer", display: "flex", gap: 8, alignItems: "flex-start" }}>
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} style={{ marginTop: 2 }}/>
+        <span>
+          <strong>PDPA consent.</strong> The guest has consented to the hotel storing their facial image for check-in purposes. All actions are logged for audit purposes. (NĐ 13/2023/NĐ-CP)
+        </span>
+      </label>
+    </div>
+  );
+}
+
+window.StatsBanner = StatsBanner;
+window.GuestRow = GuestRow;
+window.PdpaConsent = PdpaConsent;
+</script>
+
+<script type="text/babel">
+// SCREEN 01 — Itinerary detail, default tab = Face ID Registration, DEFAULT state (all guests "Chưa map")
+function ScreenDefault() {
+  const data = window.PROTO_DATA;
+  const [consent, setConsent] = React.useState(false);
+  const [search, setSearch] = React.useState("");
+
+  const visibleGuests = data.guests.filter(g =>
+    !search ||
+    g.confNo.toLowerCase().includes(search.toLowerCase()) ||
+    g.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <ItineraryShell activeTab="faceid" onTabChange={(t) => t === "activity" && window.GO && window.GO(6)}>
+      {/* Stats banner — all "Chưa map" */}
+      <StatsBanner stats={[
+        { label: "Chưa map",     value: data.guests.length, tone: "warn" },
+        { label: "Đã map",       value: 0, tone: "neutral" },
+        { label: "Needs review", value: 0, tone: "neutral" },
+        { label: "Failed",       value: 0, tone: "neutral" },
+      ]}/>
+
+      {/* PDPA + primary actions */}
+      <div style={{ marginTop: 12, display: "flex", gap: 12, alignItems: "stretch" }}>
+        <div style={{ flex: 1 }}>
+          <PdpaConsent checked={consent} onChange={setConsent}/>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, justifyContent: "center" }}>
+          <Btn variant="primary" icon="upload" disabled={!consent} onClick={() => window.GO && window.GO(2)}>
+            Đăng ký Face ID hàng loạt
+          </Btn>
+          <Btn icon="plus" disabled={!consent}>+ Map single guest</Btn>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div style={{
+        marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12,
+        background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, padding: "8px 10px"
+      }}>
+        <div style={{ fontSize: 12, color: PMS.inkMuted }}>
+          <strong style={{ color: PMS.ink }}>{data.guests.length}</strong> guests trong đoàn · chưa khách nào đăng ký Face ID
+        </div>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 8, padding: "5px 10px", borderRadius: 5,
+          border: `1px solid ${PMS.border}`, fontSize: 12, color: PMS.inkSubtle, minWidth: 240
+        }}>
+          <Icon name="search" size={13}/>
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm theo conf. no hoặc tên…"
+            style={{ border: "none", outline: "none", background: "transparent", fontSize: 12, color: PMS.ink, flex: 1 }}/>
+        </div>
+      </div>
+
+      {/* Guest list */}
+      <div style={{ marginTop: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, overflow: "hidden" }}>
+        <div style={{ maxHeight: 460, overflow: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <thead>
+              <tr style={{ background: PMS.surfaceMuted, color: PMS.inkMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.4, position: "sticky", top: 0 }}>
+                {["Conf. No", "Guest", "Face", "Status", ""].map((h, i) =>
+                  <th key={i} style={{ textAlign: "left", padding: "9px 12px", fontWeight: 500, borderBottom: `1px solid ${PMS.border}` }}>{h}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {visibleGuests.map((g) => (
+                <GuestRow key={g.confNo} guest={g} mode="default" status="unmapped"/>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Help banner */}
+      <div style={{
+        marginTop: 12, padding: "10px 12px", borderRadius: 6, background: PMS.brandSoft,
+        border: `1px solid #BBD4E5`, display: "flex", gap: 10, alignItems: "flex-start",
+      }}>
+        <div style={{ color: PMS.brand, marginTop: 1 }}><Icon name="info" size={16}/></div>
+        <div style={{ fontSize: 12, color: PMS.ink, lineHeight: 1.55 }}>
+          <strong>Hướng dẫn:</strong> Chọn nhiều file ảnh (JPG/PNG/JPEG, ≤ 5 MB mỗi ảnh) — hệ thống tự ghép tên file với khách trong rooming list. Tên file recommended: <code style={{ background: PMS.bg, padding: "1px 5px", borderRadius: 3 }}>nguyen thi van.jpg</code>
+        </div>
+      </div>
+    </ItineraryShell>
+  );
+}
+window.ScreenDefault = ScreenDefault;
+</script>
+
+<script type="text/babel">
+// SCREEN 02 — File picker simulation + uploading + auto-matching (intermediate state)
+function ScreenUploading() {
+  const data = window.PROTO_DATA;
+  const [stage, setStage] = React.useState("picker"); // picker | uploading | matching | done
   const [progress, setProgress] = React.useState(0);
 
   React.useEffect(() => {
     if (stage === "uploading") {
       const t = setInterval(() => setProgress(p => {
-        const np = Math.min(100, p + 7);
-        if (np >= 100) { clearInterval(t); setTimeout(() => setStage("parsing"), 300); }
+        const np = Math.min(100, p + 8);
+        if (np >= 100) { clearInterval(t); setTimeout(() => setStage("matching"), 250); }
         return np;
-      }), 120);
+      }), 100);
       return () => clearInterval(t);
     }
-    if (stage === "parsing") {
-      const t = setTimeout(() => setStage("done"), 1100);
+    if (stage === "matching") {
+      const t = setTimeout(() => setStage("done"), 1000);
       return () => clearTimeout(t);
     }
   }, [stage]);
 
-  const it = window.PROTO_DATA.itinerary;
-
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: PMS.bg, fontFamily: 'Inter, -apple-system, "Segoe UI", sans-serif', color: PMS.ink }}>
-      <TopBar/>
-      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
-        <SideNav active="groups"/>
-        <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
-          {/* Dimmed bg representing the itinerary */}
-          <div style={{ position: "absolute", inset: 0, background: PMS.bg, opacity: 1 }}>
-            <div style={{ padding: "14px 18px", filter: "blur(2px)", opacity: 0.45, pointerEvents: "none" }}>
-              <Crumb items={["Front Office", "Group Reservation", `${it.groupCode}`]}/>
-              <div style={{ marginTop: 10, height: 80, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6 }}/>
-              <div style={{ marginTop: 12, height: 280, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6 }}/>
+    <ItineraryShell activeTab="faceid">
+      {/* dimmed default view in background; overlay shows upload progress */}
+      <StatsBanner stats={[
+        { label: "Chưa map", value: data.guests.length, tone: "warn" },
+        { label: "Đã map", value: 0, tone: "neutral" },
+        { label: "Needs review", value: 0, tone: "neutral" },
+        { label: "Failed", value: 0, tone: "neutral" },
+      ]}/>
+
+      {/* Upload progress card replacing actions area */}
+      <div style={{ marginTop: 12, background: PMS.surface, border: `1px solid ${PMS.brand}`, borderRadius: 6, padding: "14px 16px" }}>
+        {stage === "picker" && (
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 6, background: PMS.brandSoft, color: PMS.brand, display: "grid", placeItems: "center" }}>
+                <Icon name="folder" size={20}/>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>Đang mở file picker…</div>
+                <div style={{ fontSize: 11, color: PMS.inkMuted }}>Chọn nhiều ảnh JPG/PNG/JPEG (≤ 5 MB/ảnh, tối đa 200 ảnh)</div>
+              </div>
+              <Btn variant="primary" onClick={() => setStage("uploading")}>Simulate · Chọn 20 file</Btn>
             </div>
           </div>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(17,32,46,0.42)" }}/>
-
-          {/* Modal */}
-          <div style={{
-            position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
-            width: 640, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 8,
-            boxShadow: "0 24px 60px rgba(17,32,46,0.18)", overflow: "hidden",
-          }}>
-            <div style={{ padding: "14px 18px", borderBottom: `1px solid ${PMS.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: PMS.ink }}>Đăng ký Face ID hàng loạt</div>
-                <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 2 }}>
-                  Bước 1/3 · Tải lên ảnh chân dung · {it.groupCode}
+        )}
+        {(stage === "uploading" || stage === "matching") && (
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 6, background: PMS.brandSoft, color: PMS.brand, display: "grid", placeItems: "center" }}>
+                <Icon name="upload" size={20}/>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>
+                  {stage === "uploading" ? `Đang upload 20 file ảnh… ${progress}%` : "Đang auto-match tên file với guest profile…"}
+                </div>
+                <div style={{ fontSize: 11, color: PMS.inkMuted }}>
+                  {stage === "uploading"
+                    ? "Tổng 8.4 MB · Lưu vào S3 bucket"
+                    : "Chuẩn hoá tên (bỏ số thứ tự, bỏ dấu, lowercase) · so sánh với 18 guest"}
                 </div>
               </div>
-              <Btn variant="ghost" icon="x" onClick={() => window.GO && window.GO(1)}>Đóng</Btn>
+              <Btn size="sm" variant="ghost" icon="x" onClick={() => window.GO && window.GO(1)}>Cancel</Btn>
             </div>
-
-            {/* Step indicator */}
-            <div style={{ display: "flex", gap: 6, padding: "10px 18px", background: PMS.surfaceMuted, borderBottom: `1px solid ${PMS.border}`, fontSize: 11 }}>
-              {["1. Tải lên", "2. Kiểm tra ghép tên", "3. Xác nhận đăng ký"].map((s, i) => (
-                <React.Fragment key={i}>
-                  <span style={{ color: i === 0 ? PMS.brand : PMS.inkSubtle, fontWeight: i === 0 ? 600 : 500 }}>{s}</span>
-                  {i < 2 && <span style={{ color: PMS.inkSubtle }}>›</span>}
-                </React.Fragment>
-              ))}
-            </div>
-
-            <div style={{ padding: 18 }}>
-              {stage === "idle" && (
-                <>
-                  <div
-                    onClick={() => setStage("uploading")}
-                    style={{
-                      border: `2px dashed ${PMS.borderStrong}`, borderRadius: 8, padding: "32px 20px",
-                      textAlign: "center", background: PMS.surfaceMuted, cursor: "pointer",
-                    }}>
-                    <div style={{ display: "inline-grid", placeItems: "center", width: 52, height: 52, borderRadius: 12, background: PMS.brandSoft, color: PMS.brand, marginBottom: 10 }}>
-                      <Icon name="upload" size={26}/>
-                    </div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: PMS.ink }}>Kéo thả file ZIP vào đây, hoặc bấm để chọn</div>
-                    <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 4, lineHeight: 1.6 }}>
-                      File ZIP chứa ảnh JPG/PNG. Đặt tên ảnh = họ tên khách (ví dụ: <code style={{ background: PMS.bg, padding: "1px 5px", borderRadius: 3 }}>nguyen thi van.jpg</code>)<br/>
-                      Tối đa 200 ảnh · Mỗi ảnh ≤ 5 MB · Tổng ≤ 500 MB
-                    </div>
-                  </div>
-
-                  <div style={{
-                    marginTop: 14, padding: 12, background: PMS.warnSoft, border: `1px solid #EBC79A`,
-                    borderRadius: 6, display: "flex", gap: 10, alignItems: "flex-start",
-                  }}>
-                    <div style={{ color: PMS.warn, marginTop: 1 }}><Icon name="lock" size={16}/></div>
-                    <div style={{ fontSize: 12, color: PMS.ink, lineHeight: 1.55 }}>
-                      <strong>Lưu ý về dữ liệu cá nhân.</strong> Khi tiếp tục, bạn xác nhận đoàn khách đã đồng ý cho khách sạn lưu ảnh khuôn mặt phục vụ check-in. Mọi thao tác đều được ghi lại để phục vụ kiểm toán.
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end", gap: 6 }}>
-                    <Btn onClick={() => window.GO && window.GO(1)}>Huỷ</Btn>
-                    <Btn variant="primary" icon="upload" onClick={() => setStage("uploading")}>Chọn file ZIP</Btn>
-                  </div>
-                </>
-              )}
-
-              {(stage === "uploading" || stage === "parsing") && (
-                <>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", border: `1px solid ${PMS.border}`, borderRadius: 6 }}>
-                    <div style={{ width: 38, height: 38, borderRadius: 6, background: PMS.brandSoft, color: PMS.brand, display: "grid", placeItems: "center" }}>
-                      <Icon name="zip" size={20}/>
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>vietravel-grp1144-portraits.zip</div>
-                      <div style={{ fontSize: 11, color: PMS.inkMuted }}>20 ảnh · 12.4 MB · {stage === "uploading" ? `Đã tải lên ${progress}%` : "Đang kiểm tra & ghép tên ảnh với khách…"}</div>
-                    </div>
-                    <Btn size="sm" variant="ghost" icon="x">Huỷ</Btn>
-                  </div>
-                  <div style={{ height: 6, marginTop: 14, background: PMS.bg, borderRadius: 999, overflow: "hidden" }}>
-                    <div style={{
-                      height: "100%", width: stage === "uploading" ? `${progress}%` : "100%",
-                      background: stage === "uploading" ? PMS.brand : PMS.accent,
-                      transition: "width 0.2s",
-                    }}/>
-                  </div>
-                  <div style={{ marginTop: 18, fontSize: 12, color: PMS.inkMuted, lineHeight: 1.7 }}>
-                    {stage === "uploading"
-                      ? <>↑ Đang tải file vietravel-grp1144-portraits.zip…</>
-                      : <>
-                          ✓ Đã kiểm tra: 20 ảnh hợp lệ (JPG/PNG, đều ≤ 5 MB)<br/>
-                          ✓ Đã giải nén: 20 ảnh<br/>
-                          ⏳ Đang chuẩn hoá tên file (bỏ số thứ tự, bỏ dấu, viết thường…)<br/>
-                          ⏳ Đang ghép với {window.PROTO_DATA.profiles.length} khách trong rooming list…
-                        </>}
-                  </div>
-                </>
-              )}
-
-              {stage === "done" && (
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: PMS.okSoft, color: PMS.ok, display: "grid", placeItems: "center" }}>
-                      <Icon name="check" size={18}/>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 600 }}>Đã giải nén 20 ảnh</div>
-                      <div style={{ fontSize: 12, color: PMS.inkMuted }}>17 ảnh tự ghép thành công · 1 ảnh trùng tên (cần chọn) · 3 ảnh không tìm được khách</div>
-                    </div>
-                  </div>
-                  <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end", gap: 6 }}>
-                    <Btn onClick={() => setStage("idle")}>Tải file khác</Btn>
-                    <Btn variant="primary" icon="arrowRight" onClick={() => window.GO && window.GO(3)}>
-                      Tiếp tục kiểm tra
-                    </Btn>
-                  </div>
-                </div>
-              )}
+            <div style={{ height: 6, marginTop: 14, background: PMS.bg, borderRadius: 999, overflow: "hidden" }}>
+              <div style={{
+                height: "100%",
+                width: stage === "uploading" ? `${progress}%` : "100%",
+                background: stage === "uploading" ? PMS.brand : PMS.accent,
+                transition: "width 0.2s",
+              }}/>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-window.ScreenUpload = ScreenUpload;
-
-</script>
-<script type="text/babel">
-// Screen 3: Review mapping — 3 sections (Mapped / Needs Review / Unmapped) with manual mapping controls
-function ScreenReview() {
-  const data = window.PROTO_DATA;
-  const it = data.itinerary;
-  const [files, setFiles] = React.useState(() => data.uploadedFiles.map((f) => ({ ...f })));
-  const [tab, setTab] = React.useState("all");
-  const [openDropdown, setOpenDropdown] = React.useState(null);
-  const [search, setSearch] = React.useState("");
-  const [modal, setModal] = React.useState(null); // null | "uploadMore" | "discard" | "discarded"
-  const [batchVersion, setBatchVersion] = React.useState(1); // bumps when user re-uploads
-
-  const counts = {
-    matched: files.filter((f) => f.status === "matched").length,
-    ambiguous: files.filter((f) => f.status === "ambiguous").length,
-    unmapped: files.filter((f) => f.status === "unmapped").length,
-    skipped: files.filter((f) => f.status === "skipped").length,
-    total: files.length
-  };
-  const ready = counts.matched; // ready-to-register count
-
-  const visible = files.filter((f) => {
-    if (tab === "all") return f.status !== "skipped";
-    return f.status === tab;
-  });
-
-  const usedProfileIds = new Set(
-    files.filter((f) => typeof f.match === "string").map((f) => f.match)
-  );
-
-  const profileById = (id) => data.profiles.find((p) => p.id === id);
-  const profileLabel = (id) => {
-    const p = profileById(id);
-    return p ? `${p.name} · Room ${p.room} · ${p.id}` : "—";
-  };
-
-  const setMatch = (file, profileId) => {
-    setFiles((fs) => fs.map((f) => f.file === file ? { ...f, match: profileId, status: "matched" } : f));
-    setOpenDropdown(null);
-  };
-  const setSkip = (file) => {
-    setFiles((fs) => fs.map((f) => f.file === file ? { ...f, status: "skipped" } : f));
-  };
-  const unskip = (file) => {
-    setFiles((fs) => fs.map((f) => f.file === file ? { ...f, status: f.match ? "matched" : "unmapped" } : f));
-  };
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: PMS.bg, fontFamily: 'Inter, -apple-system, "Segoe UI", sans-serif', color: PMS.ink }}>
-      <TopBar />
-      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
-        <SideNav active="groups" />
-        <div style={{ flex: 1, overflow: "auto", padding: "14px 18px 18px" }}>
-          <Crumb items={["Front Office", "Group Reservation", it.groupCode, "Bulk Face ID Registration"]} />
-
-          {/* Header */}
-          <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16 }}>
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 700 }}>Review mapping — {it.groupName}</div>
-              <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 2 }}>Step 2 of 3 · Mapping profile khách hàng.
-
+        )}
+        {stage === "done" && (
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 38, height: 38, borderRadius: "50%", background: PMS.okSoft, color: PMS.ok, display: "grid", placeItems: "center" }}>
+                <Icon name="check" size={20}/>
               </div>
-            </div>
-            <div style={{ display: "flex", gap: 6 }}>
-              <Btn icon="trash" variant="danger" onClick={() => setModal("discard")}>Discard batch</Btn>
-              <Btn icon="upload" onClick={() => setModal("uploadMore")}>Upload more / replace</Btn>
-            </div>
-          </div>
-
-          {/* Summary stat strip */}
-          <div style={{
-            marginTop: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6,
-            display: "grid", gridTemplateColumns: "repeat(5, 1fr)", overflow: "hidden"
-          }}>
-            {[
-            { label: "Files in batch", value: counts.total, tone: "neutral", icon: "image" },
-            { label: "Mapped", value: counts.matched, tone: "ok", icon: "check" },
-            { label: "Needs review", value: counts.ambiguous, tone: "warn", icon: "warn" },
-            { label: "Unmapped", value: counts.unmapped, tone: "danger", icon: "info" },
-            { label: "Skipped", value: counts.skipped, tone: "neutral", icon: "skip" }].
-            map((s, i) =>
-            <div key={i} style={{
-              padding: "12px 14px",
-              borderRight: i < 4 ? `1px solid ${PMS.border}` : "none",
-              display: "flex", flexDirection: "column", gap: 4
-            }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: PMS.inkMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>
-                  <Icon name={s.icon} size={12} /> {s.label}
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>Hoàn tất upload + auto-match</div>
+                <div style={{ fontSize: 11, color: PMS.inkMuted }}>
+                  20 file đã upload · 16 mapped · 1 ambiguous · 3 unmapped files · 1 guest chưa có ảnh
                 </div>
-                <div style={{
-                fontSize: 22, fontWeight: 700,
-                color: s.tone === "ok" ? PMS.ok : s.tone === "warn" ? PMS.warn : s.tone === "danger" ? PMS.danger : PMS.ink
-              }}>{s.value}</div>
               </div>
-            )}
-          </div>
-
-          {/* Action bar */}
-          <div style={{
-            marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12,
-            background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, padding: "8px 10px"
-          }}>
-            <div style={{ display: "flex", gap: 4 }}>
-              {[
-              ["all", `All (${counts.total - counts.skipped})`],
-              ["matched", `Mapped (${counts.matched})`, "ok"],
-              ["ambiguous", `Needs review (${counts.ambiguous})`, "warn"],
-              ["unmapped", `Unmapped (${counts.unmapped})`, "danger"],
-              ["skipped", `Skipped (${counts.skipped})`, "neutral"]].
-              map(([k, l, tone]) => {
-                const active = tab === k;
-                return (
-                  <div key={k} onClick={() => setTab(k)} style={{
-                    padding: "5px 12px", fontSize: 12, fontWeight: active ? 600 : 500,
-                    color: active ? PMS.ink : PMS.inkMuted,
-                    background: active ? PMS.bg : "transparent",
-                    border: active ? `1px solid ${PMS.borderStrong}` : `1px solid transparent`,
-                    borderRadius: 4, cursor: "pointer"
-                  }}>{l}</div>);
-
-              })}
-            </div>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 8, padding: "5px 10px", borderRadius: 5,
-              border: `1px solid ${PMS.border}`, fontSize: 12, color: PMS.inkSubtle, minWidth: 240
-            }}>
-              <Icon name="search" size={13} />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Filter by file name or profile…"
-                style={{ border: "none", outline: "none", background: "transparent", fontSize: 12, color: PMS.ink, flex: 1 }} />
-            </div>
-          </div>
-
-          {/* Table — capped height so the sticky footer stays visible */}
-          <div style={{ marginTop: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, overflow: "hidden", display: "flex", flexDirection: "column", maxHeight: 360 }}>
-            <div style={{ overflow: "auto", flex: 1 }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-              <thead>
-                <tr style={{ background: PMS.surfaceMuted, color: PMS.inkMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.4 }}>
-                  {["Photo", "Mapped Profile", "Room", "Status", ""].map((h, i) =>
-                    <th key={i} style={{ textAlign: "left", padding: "9px 12px", fontWeight: 500, borderBottom: `1px solid ${PMS.border}` }}>{h}</th>
-                    )}
-                </tr>
-              </thead>
-              <tbody>
-                {(() => {
-                    const filtered = visible.filter((f) => !search || f.file.toLowerCase().includes(search.toLowerCase()) || typeof f.match === "string" && profileLabel(f.match).toLowerCase().includes(search.toLowerCase()));
-                    if (filtered.length === 0) {
-                      return (
-                        <tr>
-                        <td colSpan={5} style={{ padding: "32px 12px", textAlign: "center", color: PMS.inkSubtle, fontSize: 12 }}>
-                          <Icon name="search" size={20} />
-                          <div style={{ marginTop: 6 }}>No results for "<strong style={{ color: PMS.ink }}>{search}</strong>" in this view.</div>
-                          <div style={{ fontSize: 11, marginTop: 4 }}>Try clearing the search or switching filter tab.</div>
-                        </td>
-                      </tr>);
-
-                    }
-                    return filtered.map((f, i) => {
-                      const isMatched = f.status === "matched";
-                      const isAmbig = f.status === "ambiguous";
-                      const isUnmapped = f.status === "unmapped";
-                      const isSkipped = f.status === "skipped";
-                      const profile = isMatched ? profileById(f.match) : null;
-
-                      // Shorten file name: trim extension and any leading numeric prefix
-                      const shortFile = f.file.
-                      replace(/\.[a-z0-9]+$/i, "").
-                      replace(/^\d+\s+/, "");
-
-                      return (
-                        <tr key={f.file} style={{
-                          borderBottom: `1px solid ${PMS.border}`,
-                          background: isSkipped ? PMS.surfaceMuted : "white",
-                          opacity: isSkipped ? 0.65 : 1
-                        }}>
-                        <td style={{ padding: "8px 12px", maxWidth: 240 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <FacePlaceholder size={36} name={f.file.replace(/\.[a-z]+$/i, "")} />
-                            <div style={{ minWidth: 0, flex: 1 }}>
-                              <div title={f.file} style={{
-                                  fontWeight: 500, color: PMS.ink, fontSize: 12,
-                                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
-                                }}>{shortFile}</div>
-                              <div style={{ fontSize: 11, color: PMS.inkSubtle }}>
-                                {f.size}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td style={{ padding: "8px 12px", position: "relative" }}>
-                          {isMatched && profile && (
-                            openDropdown === f.file ?
-                            <ProfileDropdown
-                              isOpen={true}
-                              setOpen={() => setOpenDropdown(null)}
-                              candidates={null}
-                              profiles={data.profiles.filter((p) => !usedProfileIds.has(p.id) || p.id === f.match)}
-                              onPick={(pid) => setMatch(f.file, pid)}
-                              placeholder={`Re-map · currently ${profile.name}`}
-                              tone="ok" /> :
-
-
-                            <div onClick={() => setOpenDropdown(f.file)} style={{
-                              cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6,
-                              padding: "3px 6px", margin: "-3px -6px", borderRadius: 4
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.background = PMS.surfaceMuted}
-                            onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                            title="Click to re-map this photo to a different profile">
-                              
-                                <div>
-                                  <div style={{ fontWeight: 500, color: PMS.ink }}>{profile.name}</div>
-                                  <div style={{ fontSize: 11, color: PMS.inkSubtle, fontFamily: "ui-monospace, Menlo, monospace" }}>{profile.id}</div>
-                                </div>
-                                <Icon name="edit" size={12} stroke={PMS.inkSubtle} />
-                              </div>)
-
-                            }
-                          {(isAmbig || isUnmapped || isSkipped) &&
-                            <ProfileDropdown
-                              isOpen={openDropdown === f.file}
-                              setOpen={() => setOpenDropdown(openDropdown === f.file ? null : f.file)}
-                              candidates={isAmbig ? f.match : null}
-                              profiles={data.profiles.filter((p) => !usedProfileIds.has(p.id) || isAmbig && f.match.includes(p.id))}
-                              onPick={(pid) => setMatch(f.file, pid)}
-                              placeholder={isAmbig ? "Choose between 2 matches…" : "Search & assign profile…"}
-                              tone={isAmbig ? "warn" : "danger"} />
-
-                            }
-                        </td>
-                        <td style={{ padding: "8px 12px", color: PMS.inkMuted }}>
-                          {profile ? profile.room : <span style={{ color: PMS.inkSubtle }}>—</span>}
-                        </td>
-                        <td style={{ padding: "8px 12px" }}>
-                          {isMatched && <StatusPill tone="ok">Mapped</StatusPill>}
-                          {isAmbig && <StatusPill tone="warn">Ambiguous</StatusPill>}
-                          {isUnmapped && <StatusPill tone="danger">No match</StatusPill>}
-                          {isSkipped && <StatusPill tone="neutral">Skipped</StatusPill>}
-                        </td>
-                        <td style={{ padding: "8px 12px", textAlign: "right" }}>
-                          {!isSkipped ?
-                            <Btn size="sm" variant="ghost" icon="skip" onClick={() => setSkip(f.file)}>Skip</Btn> :
-
-                            <Btn size="sm" variant="ghost" icon="refresh" onClick={() => unskip(f.file)}>Restore</Btn>
-                            }
-                        </td>
-                      </tr>);
-
-                    });
-                  })()}
-              </tbody>
-            </table>
-            </div>
-          </div>
-
-          {/* Prominent confirmation banner — directly above the CTA */}
-          <div style={{
-            marginTop: 12, padding: "12px 14px", borderRadius: 6,
-            background: PMS.warnSoft, border: `1px solid #EBC79A`,
-            display: "flex", gap: 10, alignItems: "center"
-          }}>
-            <div style={{ color: PMS.warn, flexShrink: 0 }}><Icon name="lock" size={18} /></div>
-            <div style={{ fontSize: 13, color: PMS.ink, lineHeight: 1.55 }}>
-              <strong>Face ID API will only be called when you click "Confirm & Register" below.</strong>
-              <span style={{ color: PMS.inkMuted }}></span>
-            </div>
-          </div>
-
-          {/* Footer / sticky CTA */}
-          <div style={{
-            marginTop: 10, padding: "12px 16px", background: PMS.surface, border: `1px solid ${PMS.border}`,
-            borderRadius: 6, display: "flex", justifyContent: "space-between", alignItems: "center"
-          }}>
-            <div style={{ fontSize: 12, color: PMS.inkMuted }}>
-              <strong style={{ color: PMS.ink }}>{ready}</strong> photo{ready === 1 ? "" : "s"} ready to register ·{" "}
-              <span style={{ color: counts.ambiguous + counts.unmapped > 0 ? PMS.warn : PMS.inkMuted }}>
-                {counts.ambiguous + counts.unmapped} still need attention
-              </span>
-              {counts.skipped > 0 && <> · {counts.skipped} will be skipped</>}
-            </div>
-            <div style={{ display: "flex", gap: 6 }}>
-              <Btn
-                variant="primary"
-                icon="scan"
-                disabled={ready === 0}
-                onClick={() => window.GO && window.GO(4)}>
-                
-                Confirm & Register {ready} photo{ready === 1 ? "" : "s"}
+              <Btn variant="primary" icon="arrowRight" onClick={() => window.GO && window.GO(3)}>
+                Tiếp tục review
               </Btn>
             </div>
           </div>
+        )}
+      </div>
 
-          <div style={{ marginTop: 10, fontSize: 11, color: PMS.inkSubtle, lineHeight: 1.7 }}>
-            <Icon name="lock" size={11} /> All actions are logged with user, timestamp, and IP for audit (NĐ 13/2023/NĐ-CP — Điều 26).
-          </div>
-
-          {/* In-page modals */}
-          {modal &&
-          <div onClick={() => setModal(null)} style={{
-            position: "absolute", inset: 0, background: "rgba(17,32,46,0.42)",
-            display: "grid", placeItems: "center", zIndex: 50
-          }}>
-              <div onClick={(e) => e.stopPropagation()} style={{
-              width: 480, background: PMS.surface, border: `1px solid ${PMS.border}`,
-              borderRadius: 8, boxShadow: "0 24px 60px rgba(17,32,46,0.18)", overflow: "hidden"
-            }}>
-                {modal === "uploadMore" &&
-              <>
-                    <div style={{ padding: "14px 18px", borderBottom: `1px solid ${PMS.border}` }}>
-                      <div style={{ fontSize: 15, fontWeight: 700 }}>Upload more photos</div>
-                      <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 2 }}>
-                        Chọn cách xử lý batch hiện tại ({counts.total} ảnh).
-                      </div>
-                    </div>
-                    <div style={{ padding: "14px 18px", display: "flex", flexDirection: "column", gap: 10 }}>
-                      <div onClick={() => {setBatchVersion((v) => v + 1);setModal(null);window.GO && window.GO(2);}} style={{
-                    padding: "12px 14px", border: `1px solid ${PMS.border}`, borderRadius: 6, cursor: "pointer",
-                    display: "flex", gap: 10, alignItems: "flex-start"
-                  }}>
-                        <div style={{ color: PMS.brand, marginTop: 1 }}><Icon name="plus" size={18} /></div>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 600 }}>Merge — add new photos</div>
-                          <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 2 }}>
-                            Files đã map giữ nguyên · ảnh mới được match thêm vào batch.
-                          </div>
-                        </div>
-                      </div>
-                      <div onClick={() => {setBatchVersion((v) => v + 1);setModal(null);window.GO && window.GO(2);}} style={{
-                    padding: "12px 14px", border: `1px solid ${PMS.border}`, borderRadius: 6, cursor: "pointer",
-                    display: "flex", gap: 10, alignItems: "flex-start"
-                  }}>
-                        <div style={{ color: PMS.warn, marginTop: 1 }}><Icon name="refresh" size={18} /></div>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 600 }}>Replace — overwrite this batch</div>
-                          <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 2 }}>
-                            Toàn bộ batch hiện tại bị xoá; bạn upload ZIP mới từ đầu. Không ảnh hưởng dữ liệu đã save.
-                          </div>
-                        </div>
-                      </div>
-                      <div style={{ fontSize: 11, color: PMS.inkSubtle, lineHeight: 1.55, padding: "4px 2px" }}>
-                        <Icon name="info" size={11} /> Để re-map từng ảnh, dùng dropdown "Mapped Profile" trong bảng — không cần upload lại.
-                      </div>
-                    </div>
-                    <div style={{ padding: "10px 18px", background: PMS.surfaceMuted, borderTop: `1px solid ${PMS.border}`, display: "flex", justifyContent: "flex-end", gap: 6 }}>
-                      <Btn onClick={() => setModal(null)}>Cancel</Btn>
-                    </div>
-                  </>
-              }
-                {modal === "discard" &&
-              <>
-                    <div style={{ padding: "14px 18px", borderBottom: `1px solid ${PMS.border}` }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: PMS.danger }}>Discard this batch?</div>
-                      <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 2 }}>
-                        Vì sai sót khi upload, bạn có thể huỷ batch và bắt đầu lại.
-                      </div>
-                    </div>
-                    <div style={{ padding: "14px 18px", fontSize: 13, color: PMS.ink, lineHeight: 1.6 }}>
-                      <div style={{ marginBottom: 8 }}>
-                        <strong>{counts.total}</strong> ảnh và toàn bộ mapping ({counts.matched} đã map) sẽ bị xoá.
-                      </div>
-                      <div style={{
-                    padding: 10, background: PMS.okSoft, borderRadius: 4, fontSize: 12, color: PMS.ok
-                  }}>
-                        <Icon name="check" size={11} /> Face ID API <strong>chưa được gọi</strong> — không có bioId nào bị tạo. Hành động này an toàn để rollback.
-                      </div>
-                    </div>
-                    <div style={{ padding: "10px 18px", background: PMS.surfaceMuted, borderTop: `1px solid ${PMS.border}`, display: "flex", justifyContent: "flex-end", gap: 6 }}>
-                      <Btn onClick={() => setModal(null)}>Keep batch</Btn>
-                      <Btn variant="danger" icon="trash" onClick={() => {setModal(null);window.GO && window.GO(1);}}>Discard & exit</Btn>
-                    </div>
-                  </>
-              }
-              </div>
-            </div>
-          }
+      {/* Dimmed list below */}
+      <div style={{ marginTop: 12, opacity: 0.45, pointerEvents: "none" }}>
+        <div style={{ background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, overflow: "hidden" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <thead>
+              <tr style={{ background: PMS.surfaceMuted, color: PMS.inkMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.4 }}>
+                {["Conf. No", "Guest", "Face", "Status", ""].map((h, i) =>
+                  <th key={i} style={{ textAlign: "left", padding: "9px 12px", fontWeight: 500, borderBottom: `1px solid ${PMS.border}` }}>{h}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {data.guests.slice(0, 6).map((g) => (
+                <GuestRow key={g.confNo} guest={g} mode="default" status="unmapped"/>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
-    </div>);
-
+    </ItineraryShell>
+  );
 }
+window.ScreenUploading = ScreenUploading;
+</script>
 
-// Profile picker dropdown (works for both ambiguous and unmapped)
-function ProfileDropdown({ isOpen, setOpen, profiles, candidates, onPick, placeholder, tone }) {
-  const [q, setQ] = React.useState("");
-  const ref = React.useRef(null);
+<script type="text/babel">
+// SCREEN 03 — Tab Face ID Registration, REVIEWING state (inline, Option B)
+// List "biến" sang review mode: status column = suggested mapping; sticky action bar; Unmapped files section at bottom
+function ScreenReviewing() {
+  const data = window.PROTO_DATA;
 
-  React.useEffect(() => {
-    if (!isOpen) return;
-    const close = (e) => {if (ref.current && !ref.current.contains(e.target)) setOpen();};
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, [isOpen]);
+  // Build review mapping per guest
+  // For each guest: find any file with match === profileId, mark "matched"
+  // For guests with no file: "no-photo"
+  // For files with status "ambiguous": add to both candidate guests as "ambiguous"
+  const reviewMapping = React.useMemo(() => {
+    return data.guests.map(g => {
+      const exactFile = data.pickedFiles.find(f => f.match === g.profileId && f.status === "matched");
+      if (exactFile) return { ...g, file: exactFile, status: "matched" };
+      const ambig = data.pickedFiles.find(f => f.status === "ambiguous" && Array.isArray(f.match) && f.match.includes(g.profileId));
+      if (ambig) return { ...g, file: ambig, status: "ambiguous" };
+      return { ...g, file: null, status: "no-photo" };
+    });
+  }, []);
 
-  const list = candidates ?
-  profiles.filter((p) => candidates.includes(p.id)) :
-  profiles.filter((p) => !q || p.name.toLowerCase().includes(q.toLowerCase()) || p.id.toLowerCase().includes(q.toLowerCase()));
+  const unmappedFiles = data.pickedFiles.filter(f => f.status === "unmapped");
+
+  const counts = {
+    matched: reviewMapping.filter(r => r.status === "matched").length,
+    ambiguous: reviewMapping.filter(r => r.status === "ambiguous").length,
+    noPhoto: reviewMapping.filter(r => r.status === "no-photo").length,
+    unmapped: unmappedFiles.length,
+  };
+  const ready = counts.matched; // chỉ guests đã mapped sẵn sàng register; ambiguous cần user confirm
+  const reviewBadge = (
+    <StatusPill tone="warn"><Icon name="warn" size={11}/> Đang review batch</StatusPill>
+  );
 
   return (
-    <div ref={ref} style={{ position: "relative", display: "inline-block", minWidth: 280 }}>
-      <div onClick={setOpen} style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
-        padding: "5px 10px", border: `1px solid ${tone === "warn" ? "#EBC79A" : "#E5BFB8"}`,
-        background: tone === "warn" ? PMS.warnSoft : PMS.dangerSoft,
-        borderRadius: 4, fontSize: 12, color: PMS.ink, cursor: "pointer"
-      }}>
-        <span style={{ color: PMS.inkMuted }}>{placeholder}</span>
-        <Icon name="chevronDown" size={12} />
-      </div>
-      {isOpen &&
+    <ItineraryShell activeTab="faceid" headerBadge={reviewBadge}>
+      {/* Sticky review action bar — top */}
       <div style={{
-        position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 20,
-        width: 360, background: PMS.surface, border: `1px solid ${PMS.borderStrong}`, borderRadius: 6,
-        boxShadow: "0 10px 28px rgba(17,32,46,0.14)", overflow: "hidden"
+        background: PMS.warnSoft, border: `1px solid #EBC79A`, borderRadius: 6,
+        padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12
       }}>
-          {!candidates &&
-        <div style={{ padding: 8, borderBottom: `1px solid ${PMS.border}`, display: "flex", alignItems: "center", gap: 6 }}>
-              <Icon name="search" size={13} stroke={PMS.inkSubtle} />
-              <input
-            autoFocus
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search profile by name or ID…"
-            style={{ flex: 1, border: "none", outline: "none", fontSize: 12, color: PMS.ink, background: "transparent" }} />
-            </div>
-        }
-          <div style={{ maxHeight: 240, overflow: "auto" }}>
-            {list.length === 0 &&
-          <div style={{ padding: "16px 12px", fontSize: 12, color: PMS.inkSubtle, textAlign: "center" }}>
-                All profiles already mapped to other files.
-              </div>
-          }
-            {list.map((p) =>
-          <div key={p.id} onClick={() => onPick(p.id)} style={{
-            padding: "8px 12px", fontSize: 12, cursor: "pointer", borderBottom: `1px solid ${PMS.border}`,
-            display: "flex", alignItems: "center", gap: 10
-          }}
-          onMouseDown={(e) => e.preventDefault()}
-          onMouseEnter={(e) => e.currentTarget.style.background = PMS.surfaceMuted}
-          onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
-            
-                <FacePlaceholder size={28} name={p.name} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 500, color: PMS.ink }}>{p.name}</div>
-                  <div style={{ fontSize: 11, color: PMS.inkMuted, fontFamily: "ui-monospace, Menlo, monospace" }}>
-                    {p.id} · Room {p.room}
-                  </div>
-                </div>
-                <Icon name="check" size={14} stroke={PMS.brand} />
-              </div>
-          )}
-          </div>
-          {candidates &&
-        <div style={{ padding: "8px 12px", fontSize: 11, background: PMS.warnSoft, color: PMS.warn, borderTop: `1px solid ${PMS.border}` }}>
-              <Icon name="warn" size={11} /> 2 profiles share this name — pick the correct one.
-            </div>
-        }
+        <div style={{ fontSize: 12, color: PMS.ink }}>
+          <strong>⚠ Đang review batch</strong> · 20 files → {data.guests.length} guests ·{" "}
+          <span style={{ color: PMS.ok }}>✓ Mapped {counts.matched}</span> ·{" "}
+          <span style={{ color: PMS.warn }}>⚠ Needs review {counts.ambiguous}</span> ·{" "}
+          <span style={{ color: PMS.inkMuted }}>◯ Chưa có ảnh {counts.noPhoto}</span>
         </div>
-      }
-    </div>);
+        <div style={{ display: "flex", gap: 6 }}>
+          <Btn variant="danger" icon="x" onClick={() => window.GO && window.GO(1)}>Cancel batch</Btn>
+          <Btn variant="primary" icon="scan" disabled={ready === 0} onClick={() => window.GO && window.GO(4)}>
+            Confirm {ready} & Register →
+          </Btn>
+        </div>
+      </div>
 
+      {/* Guest list — guest-centric, status column shows review state */}
+      <div style={{ marginTop: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, overflow: "hidden" }}>
+        <div style={{ maxHeight: 380, overflow: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <thead>
+              <tr style={{ background: PMS.surfaceMuted, color: PMS.inkMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.4, position: "sticky", top: 0 }}>
+                {["Conf. No", "Guest", "Face suggested", "Status (review)", ""].map((h, i) =>
+                  <th key={i} style={{ textAlign: "left", padding: "9px 12px", fontWeight: 500, borderBottom: `1px solid ${PMS.border}` }}>{h}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {reviewMapping.map((g) => (
+                <GuestRow key={g.confNo} guest={g} mode="reviewing" file={g.file} status={g.status}/>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Unmapped files section */}
+      {unmappedFiles.length > 0 && (
+        <div style={{ marginTop: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, overflow: "hidden" }}>
+          <div style={{ padding: "10px 14px", borderBottom: `1px solid ${PMS.border}`, background: PMS.surfaceMuted, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>
+                ▾ Unmapped files ({unmappedFiles.length})
+              </div>
+              <div style={{ fontSize: 11, color: PMS.inkMuted, marginTop: 1 }}>
+                File không match guest nào trong roster — gán thủ công hoặc skip
+              </div>
+            </div>
+          </div>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <tbody>
+              {unmappedFiles.map((f) => (
+                <tr key={f.file} style={{ borderBottom: `1px solid ${PMS.border}` }}>
+                  <td style={{ padding: "8px 12px", width: 48 }}>
+                    <FacePlaceholder size={32} name={f.file.replace(/\.[a-z]+$/i, "")}/>
+                  </td>
+                  <td style={{ padding: "8px 12px" }}>
+                    <div style={{ fontWeight: 500, color: PMS.ink, fontSize: 12 }}>{f.file}</div>
+                    <div style={{ fontSize: 11, color: PMS.inkSubtle }}>{f.size} · normalized: <code style={{ background: PMS.bg, padding: "0 3px", borderRadius: 2 }}>{f.normalized}</code></div>
+                  </td>
+                  <td style={{ padding: "8px 12px", textAlign: "right" }}>
+                    <div style={{ display: "inline-flex", gap: 6 }}>
+                      <Btn size="sm" variant="ghost" icon="user">Gán cho guest ▾</Btn>
+                      <Btn size="sm" variant="ghost" icon="skip">Skip</Btn>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Sticky bottom action bar (repeated) */}
+      <div style={{
+        marginTop: 12, padding: "10px 14px", background: PMS.surface, border: `1px solid ${PMS.border}`,
+        borderRadius: 6, display: "flex", justifyContent: "space-between", alignItems: "center"
+      }}>
+        <div style={{ fontSize: 12, color: PMS.inkMuted }}>
+          <Icon name="lock" size={11}/> Face ID API chỉ được gọi khi bạn click "Confirm & Register". Mọi thao tác đều log để audit (NĐ 13/2023/NĐ-CP).
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          <Btn variant="danger" icon="x" onClick={() => window.GO && window.GO(1)}>Cancel batch</Btn>
+          <Btn variant="primary" icon="scan" disabled={ready === 0} onClick={() => window.GO && window.GO(4)}>
+            Confirm {ready} & Register →
+          </Btn>
+        </div>
+      </div>
+    </ItineraryShell>
+  );
 }
-
-window.ScreenReview = ScreenReview;
+window.ScreenReviewing = ScreenReviewing;
 </script>
+
 <script type="text/babel">
-// Screen 4: Confirm + processing — calling Face ID API in batch with concurrency
+// SCREEN 04 — Processing as MODAL overlay on top of Reviewing screen
 function ScreenProcessing() {
   const data = window.PROTO_DATA;
-  const it = data.itinerary;
 
-  // Pre-defined outcomes so the demo is deterministic
-  const queue = React.useMemo(() => [
-  { file: "1744 Nguyen Thi Van.jpg", profile: "Nguyễn Thị Vân", result: "ok", bioId: "BIO-7C4A91" },
-  { file: "1745 Tran Van An.jpg", profile: "Trần Văn An", result: "ok", bioId: "BIO-7C4A92" },
-  { file: "le hoang minh.png", profile: "Lê Hoàng Minh", result: "ok", bioId: "BIO-7C4A93" },
-  { file: "Pham Thu Ha.jpg", profile: "Phạm Thu Hà", result: "ok", bioId: "BIO-7C4A94" },
-  { file: "DangQuocBao_passport.jpg", profile: "Đặng Quốc Bảo", result: "ok", bioId: "BIO-7C4A95" },
-  { file: "hoang mai anh.jpg", profile: "Hoàng Mai Anh", result: "ok", bioId: "BIO-7C4A96" },
-  { file: "1751 vu duc thanh.jpg", profile: "Vũ Đức Thành", result: "ok", bioId: "BIO-7C4A97" },
-  { file: "Bui Thanh Tam.jpeg", profile: "Bùi Thanh Tâm", result: "ok", bioId: "BIO-7C4A98" },
-  { file: "ngo khanh linh.jpg", profile: "Ngô Khánh Linh", result: "ok", bioId: "BIO-7C4A99" },
-  { file: "Do Thi Hong.jpg", profile: "Đỗ Thị Hồng", result: "ok", bioId: "BIO-7C4A9A" },
-  { file: "Truong Van A.jpg", profile: "Trương Văn A (R.1216)", result: "ok", bioId: "BIO-7C4A9B" },
-  { file: "ly quoc khanh.jpg", profile: "Lý Quốc Khánh", result: "ok", bioId: "BIO-7C4A9C" },
-  { file: "mai thi lan.jpg", profile: "Mai Thị Lan", result: "ok", bioId: "BIO-7C4A9D" },
-  { file: "nguyen huu phuoc.jpg", profile: "Nguyễn Hữu Phước", result: "ok", bioId: "BIO-7C4A9E" },
-  { file: "phan thi my duyen.jpg", profile: "Phan Thị Mỹ Duyên", result: "ok", bioId: "BIO-7C4A9F" },
-  { file: "ho van quy.jpg", profile: "Hồ Văn Quý", result: "fail", error: "LOW_QUALITY" },
-  { file: "lam thanh tung.jpg", profile: "Lâm Thanh Tùng", result: "fail", error: "MULTIPLE_FACES" },
-  { file: "1758 Nguyen Khanh.jpg", profile: "Nguyễn Khánh (manual)", result: "ok", bioId: "BIO-7C4AA0" }],
-  []);
+  // Queue: 18 guests (skip the 2 unmapped files), 16 ok + 2 fail
+  const queue = React.useMemo(() => {
+    return data.guests.map(g => {
+      const file = data.pickedFiles.find(f => f.match === g.profileId && f.status === "matched")
+                || data.pickedFiles.find(f => f.status === "ambiguous" && Array.isArray(f.match) && f.match.includes(g.profileId));
+      const outcome = data.outcomes[g.profileId];
+      return { ...g, file: file ? file.file : "(manual)", result: outcome.status, bioId: outcome.bioId, error: outcome.error };
+    });
+  }, []);
 
   const [idx, setIdx] = React.useState(0);
-  const [statuses, setStatuses] = React.useState(() => queue.map(() => "pending")); // pending | processing | ok | fail
+  const [statuses, setStatuses] = React.useState(() => queue.map(() => "pending"));
   const [done, setDone] = React.useState(false);
-
-  const CONCURRENCY = 5;
 
   React.useEffect(() => {
     if (done) return;
-    if (idx >= queue.length) {setDone(true);return;}
-
-    // mark next slot as processing
-    setStatuses((s) => {
-      const ns = [...s];
-      ns[idx] = "processing";
-      return ns;
-    });
+    if (idx >= queue.length) { setDone(true); return; }
+    setStatuses(s => { const ns = [...s]; ns[idx] = "processing"; return ns; });
     const t = setTimeout(() => {
-      setStatuses((s) => {
-        const ns = [...s];
-        ns[idx] = queue[idx].result;
-        return ns;
-      });
-      setIdx((i) => i + 1);
-    }, 380 + Math.random() * 220);
+      setStatuses(s => { const ns = [...s]; ns[idx] = queue[idx].result; return ns; });
+      setIdx(i => i + 1);
+    }, 280 + Math.random() * 220);
     return () => clearTimeout(t);
   }, [idx, done]);
 
   const counts = {
-    done: statuses.filter((s) => s === "ok").length,
-    failed: statuses.filter((s) => s === "fail").length,
-    processing: statuses.filter((s) => s === "processing").length,
-    pending: statuses.filter((s) => s === "pending").length
+    done: statuses.filter(s => s === "ok").length,
+    failed: statuses.filter(s => s === "fail").length,
+    processing: statuses.filter(s => s === "processing").length,
+    pending: statuses.filter(s => s === "pending").length,
   };
   const pct = Math.round((counts.done + counts.failed) / queue.length * 100);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: PMS.bg, fontFamily: 'Inter, -apple-system, "Segoe UI", sans-serif', color: PMS.ink }}>
-      <TopBar />
-      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
-        <SideNav active="groups" />
-        <div style={{ flex: 1, overflow: "auto", padding: "14px 18px 18px" }}>
-          <Crumb items={["Front Office", "Group Reservation", it.groupCode, "Bulk Face ID Registration"]} />
+    <ItineraryShell activeTab="faceid" headerBadge={<StatusPill tone="brand"><Icon name="scan" size={11}/> Đang xử lý</StatusPill>}>
+      {/* Background: review state, but dimmed */}
+      <div style={{ opacity: 0.35, pointerEvents: "none" }}>
+        <div style={{ background: PMS.warnSoft, borderRadius: 6, padding: "10px 14px", fontSize: 12, color: PMS.ink }}>
+          ⚠ Đang review batch · 18 / 18 guests sẵn sàng register
+        </div>
+        <div style={{ marginTop: 12, height: 320, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6 }}/>
+      </div>
 
-          <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+      {/* Modal overlay */}
+      <div style={{
+        position: "absolute", inset: 0, background: "rgba(17,32,46,0.42)",
+        display: "grid", placeItems: "center", zIndex: 50
+      }}>
+        <div style={{
+          width: 640, maxHeight: "82%", background: PMS.surface, border: `1px solid ${PMS.border}`,
+          borderRadius: 8, boxShadow: "0 24px 60px rgba(17,32,46,0.18)", overflow: "hidden",
+          display: "flex", flexDirection: "column"
+        }}>
+          <div style={{ padding: "14px 18px", borderBottom: `1px solid ${PMS.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <div style={{ fontSize: 18, fontWeight: 700 }}>
-                {done ? "Registration complete" : "Registering Face IDs…"}
+              <div style={{ fontSize: 15, fontWeight: 700, color: PMS.ink }}>
+                {done ? "Hoàn tất batch" : "Đang xử lý Face ID"}
               </div>
-              <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 2 }} data-comment-anchor="6ecd30685d-div-76-15">
-                Step 3 of 3 · Calling Face ID API · concurrency = {CONCURRENCY} req/batch · {it.groupCode}
+              <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 2 }}>
+                {counts.done + counts.failed} / {queue.length} processed · concurrency = 5
               </div>
             </div>
+            {!done && <Btn size="sm" variant="ghost" icon="x">Cancel</Btn>}
           </div>
 
-          {/* Big progress section */}
-          <div style={{
-            marginTop: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, padding: 18
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <div style={{ fontSize: 13, fontWeight: 600 }}>
-                {counts.done + counts.failed} / {queue.length} processed
-              </div>
-              <div style={{ fontSize: 12, color: PMS.inkMuted }}>
-                <span style={{ color: PMS.ok, fontWeight: 600 }}>{counts.done} success</span>
-                {" · "}
-                <span style={{ color: PMS.danger, fontWeight: 600 }}>{counts.failed} failed</span>
-                {" · "}
-                <span>{counts.processing} in flight</span>
-                {" · "}
+          <div style={{ padding: "12px 18px", borderBottom: `1px solid ${PMS.border}` }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: PMS.inkMuted, marginBottom: 6 }}>
+              <span>
+                <span style={{ color: PMS.ok, fontWeight: 600 }}>{counts.done} success</span> ·{" "}
+                <span style={{ color: PMS.danger, fontWeight: 600 }}>{counts.failed} failed</span> ·{" "}
+                <span>{counts.processing} in flight</span> ·{" "}
                 <span style={{ color: PMS.inkSubtle }}>{counts.pending} queued</span>
-              </div>
+              </span>
+              <span>{pct}%</span>
             </div>
             <div style={{ height: 8, background: PMS.bg, borderRadius: 999, overflow: "hidden", display: "flex" }}>
-              <div style={{ width: `${counts.done / queue.length * 100}%`, background: PMS.ok, transition: "width 0.3s" }} />
-              <div style={{ width: `${counts.failed / queue.length * 100}%`, background: PMS.danger, transition: "width 0.3s" }} />
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 11, color: PMS.inkSubtle }}>
-              <span>{pct}%</span>
-              <span>~{Math.max(0, Math.round((counts.pending + counts.processing) * 0.5))}s remaining</span>
+              <div style={{ width: `${counts.done / queue.length * 100}%`, background: PMS.ok, transition: "width 0.3s" }}/>
+              <div style={{ width: `${counts.failed / queue.length * 100}%`, background: PMS.danger, transition: "width 0.3s" }}/>
             </div>
           </div>
 
-          {/* Live log */}
-          <Card style={{ marginTop: 12 }}
-          title="Live processing"
-          subtitle="Each request → POST /face-id/register (multipart/form-data)"
-          actions={!done && <Btn size="sm" variant="ghost" icon="x">Cancel batch</Btn>}
-          padding={0}>
-            
-            <div style={{ maxHeight: 360, overflow: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-                <thead>
-                  <tr style={{ background: PMS.surfaceMuted, color: PMS.inkMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.4, position: "sticky", top: 0 }}>
-                    {["#", "File", "Profile", "API status", "Result"].map((h, i) =>
-                    <th key={i} style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, borderBottom: `1px solid ${PMS.border}` }}>{h}</th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {queue.map((q, i) => {
-                    const st = statuses[i];
-                    return (
-                      <tr key={q.file} style={{ borderBottom: `1px solid ${PMS.border}`, opacity: st === "pending" ? 0.55 : 1 }}>
-                        <td style={{ padding: "7px 12px", color: PMS.inkSubtle, fontFamily: "ui-monospace, Menlo, monospace" }}>{String(i + 1).padStart(2, "0")}</td>
-                        <td style={{ padding: "7px 12px", fontWeight: 500 }}>{q.file}</td>
-                        <td style={{ padding: "7px 12px" }}>{q.profile}</td>
-                        <td style={{ padding: "7px 12px" }}>
-                          {st === "pending" && <span style={{ color: PMS.inkSubtle, fontSize: 11 }}>queued…</span>}
-                          {st === "processing" &&
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: PMS.brand, fontSize: 11, fontWeight: 600 }}>
-                              <span style={{
-                              width: 8, height: 8, borderRadius: "50%", background: PMS.brand,
-                              animation: "pulse 0.9s ease-in-out infinite"
-                            }} />
-                              calling API…
-                            </span>
-                          }
-                          {st === "ok" && <StatusPill tone="ok">200 OK</StatusPill>}
-                          {st === "fail" && <StatusPill tone="danger">422 {q.error}</StatusPill>}
-                        </td>
-                        <td style={{ padding: "7px 12px", fontFamily: "ui-monospace, Menlo, monospace", fontSize: 11 }}>
-                          {st === "ok" && <span style={{ color: PMS.ok }}>bioId = {q.bioId}</span>}
-                          {st === "fail" && <span style={{ color: PMS.danger }}>{q.error}</span>}
-                          {st === "processing" && <span style={{ color: PMS.inkSubtle }}>—</span>}
-                        </td>
-                      </tr>);
-
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-
-          {done &&
-          <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end", gap: 6 }}>
-              <Btn icon="arrowRight" variant="primary" onClick={() => window.GO && window.GO(5)}>
-                View summary report
-              </Btn>
-            </div>
-          }
-
-          <style>{`@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1);} 50% { opacity: 0.35; transform: scale(0.7);} }`}</style>
-        </div>
-      </div>
-    </div>);
-
-}
-
-window.ScreenProcessing = ScreenProcessing;
-</script>
-<script type="text/babel">
-// Screen 5: Final summary report
-function ScreenSummary() {
-  const data = window.PROTO_DATA;
-  const it = data.itinerary;
-
-  const total = 18, ok = 16, failed = 2, skipped = 2;
-
-  const failedItems = [
-    { file: "ho van quy.jpg",     profile: "Hồ Văn Quý",     room: "1221", error: "LOW_QUALITY",     hint: "Ảnh quá mờ — yêu cầu khách gửi ảnh khác", retry: false },
-    { file: "lam thanh tung.jpg", profile: "Lâm Thanh Tùng", room: "1222", error: "MULTIPLE_FACES",  hint: "Phát hiện 2 khuôn mặt — crop lại", retry: false },
-  ];
-
-  const okSample = [
-    { file: "1744 Nguyen Thi Van.jpg",  profile: "Nguyễn Thị Vân", room: "1208", bioId: "BIO-7C4A91" },
-    { file: "1745 Tran Van An.jpg",     profile: "Trần Văn An",    room: "1208", bioId: "BIO-7C4A92" },
-    { file: "Truong Van A.jpg",         profile: "Trương Văn A · Room 1216", room: "1216", bioId: "BIO-7C4A9B" },
-    { file: "1758 Nguyen Khanh.jpg",    profile: "Nguyễn Khánh (manual)", room: "1219", bioId: "BIO-7C4AA0" },
-  ];
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: PMS.bg, fontFamily: 'Inter, -apple-system, "Segoe UI", sans-serif', color: PMS.ink }}>
-      <TopBar/>
-      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
-        <SideNav active="groups"/>
-        <div style={{ flex: 1, overflow: "auto", padding: "14px 18px 18px" }}>
-          <Crumb items={["Front Office", "Group Reservation", it.groupCode, "Bulk Face ID — Summary"]}/>
-
-          {/* Hero */}
-          <div style={{
-            marginTop: 10, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6,
-            padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16,
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <div style={{
-                width: 48, height: 48, borderRadius: "50%", background: PMS.okSoft,
-                display: "grid", placeItems: "center", color: PMS.ok,
-              }}>
-                <Icon name="check" size={26}/>
-              </div>
-              <div>
-                <div style={{ fontSize: 17, fontWeight: 700 }}>Bulk Face ID Registration complete</div>
-                <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 2 }}>
-                  {it.groupCode} · {it.groupName} · finished at 28 Dec 2025, 09:42:16 by phuong.nv
-                </div>
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: 6 }}>
-              <Btn icon="download2">Export CSV</Btn>
-              <Btn icon="history">View audit log</Btn>
-              <Btn variant="primary" icon="arrowRight" onClick={() => window.GO && window.GO(1)}>
-                Back to itinerary
-              </Btn>
-            </div>
-          </div>
-
-          {/* Stats row */}
-          <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-            {[
-              { label: "Total in batch",  v: total,   tone: PMS.ink,    sub: "From 1 ZIP, 12.4 MB" },
-              { label: "bioId created",   v: ok,      tone: PMS.ok,     sub: `${Math.round(ok/total*100)}% success rate · linked to profiles` },
-              { label: "Failed",          v: failed,  tone: PMS.danger, sub: "API returned error → fix & retry" },
-              { label: "Skipped",         v: skipped, tone: PMS.inkMuted, sub: "Marked as not relevant" },
-            ].map((s, i) => (
-              <div key={i} style={{ background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, padding: "12px 14px" }}>
-                <div style={{ fontSize: 11, color: PMS.inkMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>{s.label}</div>
-                <div style={{ fontSize: 26, fontWeight: 700, color: s.tone, marginTop: 3 }}>{s.v}</div>
-                <div style={{ fontSize: 11, color: PMS.inkSubtle, marginTop: 2 }}>{s.sub}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Two columns: failed (left), success sample (right) */}
-          <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 12 }}>
-            <Card
-              title={`Failed photos (${failed})`}
-              subtitle="Retry temporary errors only — NO_FACE_DETECTED / LOW_QUALITY require new images"
-              actions={<Btn size="sm" variant="primary" icon="refresh">Retry all retryable</Btn>}
-              padding={0}
-            >
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-                <thead>
-                  <tr style={{ background: PMS.surfaceMuted, color: PMS.inkMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.4 }}>
-                    {["Photo", "Profile", "Error", "Action"].map((h, i) =>
-                      <th key={i} style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, borderBottom: `1px solid ${PMS.border}` }}>{h}</th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {failedItems.map(f => (
-                    <tr key={f.file} style={{ borderBottom: `1px solid ${PMS.border}` }}>
-                      <td style={{ padding: "8px 12px", display: "flex", alignItems: "center", gap: 8 }}>
-                        <FacePlaceholder size={32} name={f.profile} state="missing"/>
-                        <div>
-                          <div style={{ fontWeight: 500, fontSize: 12 }}>{f.file}</div>
-                          <div style={{ fontSize: 11, color: PMS.inkSubtle }}>{f.size || "—"}</div>
-                        </div>
+          <div style={{ overflow: "auto", flex: 1 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+              <thead>
+                <tr style={{ background: PMS.surfaceMuted, color: PMS.inkMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.4, position: "sticky", top: 0 }}>
+                  {["#", "File → Guest", "Result"].map((h, i) =>
+                    <th key={i} style={{ textAlign: "left", padding: "7px 12px", fontWeight: 500, borderBottom: `1px solid ${PMS.border}` }}>{h}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {queue.map((q, i) => {
+                  const st = statuses[i];
+                  return (
+                    <tr key={q.confNo} style={{ borderBottom: `1px solid ${PMS.border}`, opacity: st === "pending" ? 0.5 : 1 }}>
+                      <td style={{ padding: "6px 12px", color: PMS.inkSubtle, fontFamily: "ui-monospace, Menlo, monospace", fontSize: 11 }}>{String(i + 1).padStart(2, "0")}</td>
+                      <td style={{ padding: "6px 12px" }}>
+                        <div style={{ fontWeight: 500, fontSize: 12 }}>{q.file}</div>
+                        <div style={{ fontSize: 11, color: PMS.inkSubtle }}>→ {q.name} · {q.confNo}</div>
                       </td>
-                      <td style={{ padding: "8px 12px" }}>
-                        <div style={{ fontWeight: 500 }}>{f.profile}</div>
-                        <div style={{ fontSize: 11, color: PMS.inkMuted }}>Room {f.room}</div>
-                      </td>
-                      <td style={{ padding: "8px 12px" }}>
-                        <StatusPill tone="danger">{f.error}</StatusPill>
-                        <div style={{ fontSize: 11, color: PMS.inkMuted, marginTop: 3 }}>{f.hint}</div>
-                      </td>
-                      <td style={{ padding: "8px 12px" }}>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
-                          <Btn size="sm" variant="ghost" icon="upload">Replace photo</Btn>
-                          <Btn size="sm" variant="ghost" icon="user">Manual register</Btn>
-                        </div>
+                      <td style={{ padding: "6px 12px", fontFamily: "ui-monospace, Menlo, monospace", fontSize: 11 }}>
+                        {st === "pending" && <span style={{ color: PMS.inkSubtle }}>queued…</span>}
+                        {st === "processing" && (
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: PMS.brand, fontWeight: 600 }}>
+                            <span style={{ width: 8, height: 8, borderRadius: "50%", background: PMS.brand, animation: "pulse 0.9s ease-in-out infinite" }}/>
+                            calling API…
+                          </span>
+                        )}
+                        {st === "ok" && <span style={{ color: PMS.ok }}>✓ {q.bioId}</span>}
+                        {st === "fail" && <span style={{ color: PMS.danger }}>✗ {q.error}</span>}
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Card>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <Card title="Audit log (last 6 events)" subtitle="NĐ 13/2023/NĐ-CP — Điều 26" padding={0}>
-                <div style={{ fontFamily: "ui-monospace, Menlo, monospace", fontSize: 11, color: PMS.inkMuted, padding: "10px 14px", lineHeight: 1.85 }}>
-                  <div><span style={{ color: PMS.inkSubtle }}>09:42:16</span> bioId.attached <span style={{ color: PMS.ok }}>OK</span> P-00498 ← BIO-7C4AA0 by phuong.nv</div>
-                  <div><span style={{ color: PMS.inkSubtle }}>09:42:14</span> face.api.call <span style={{ color: PMS.danger }}>FAIL</span> file=lam_thanh_tung.jpg err=MULTIPLE_FACES</div>
-                  <div><span style={{ color: PMS.inkSubtle }}>09:42:13</span> face.api.call <span style={{ color: PMS.danger }}>FAIL</span> file=ho_van_quy.jpg err=LOW_QUALITY</div>
-                  <div><span style={{ color: PMS.inkSubtle }}>09:42:12</span> face.api.call <span style={{ color: PMS.ok }}>OK</span> bioId=BIO-7C4A9F</div>
-                  <div><span style={{ color: PMS.inkSubtle }}>09:41:58</span> batch.confirm 18 photos by phuong.nv (10.18.4.27)</div>
-                  <div><span style={{ color: PMS.inkSubtle }}>09:41:32</span> zip.upload 12.4 MB · 20 files extracted</div>
-                </div>
-              </Card>
-
-              <Card title="bioId successfully created (sample)" subtitle={`16 of 18 — bioIds linked to Profile.bioId field`} padding={0}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-                  <tbody>
-                    {okSample.map(o => (
-                      <tr key={o.file} style={{ borderBottom: `1px solid ${PMS.border}` }}>
-                        <td style={{ padding: "7px 12px" }}>
-                          <FacePlaceholder size={26} name={o.profile}/>
-                        </td>
-                        <td style={{ padding: "7px 8px" }}>
-                          <div style={{ fontWeight: 500, fontSize: 12 }}>{o.profile}</div>
-                          <div style={{ fontSize: 11, color: PMS.inkMuted }}>Room {o.room}</div>
-                        </td>
-                        <td style={{ padding: "7px 12px", textAlign: "right", fontFamily: "ui-monospace, Menlo, monospace", fontSize: 11, color: PMS.ok }}>
-                          {o.bioId}
-                        </td>
-                      </tr>
-                    ))}
-                    <tr>
-                      <td colSpan={3} style={{ padding: "8px 12px", fontSize: 11, color: PMS.inkSubtle, textAlign: "center" }}>+ 12 more</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </Card>
-            </div>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
 
-          <div style={{
-            marginTop: 12, padding: "10px 12px", borderRadius: 6, background: PMS.brandSoft,
-            border: `1px solid #BBD4E5`, display: "flex", gap: 10, alignItems: "flex-start",
-          }}>
-            <div style={{ color: PMS.brand, marginTop: 1 }}><Icon name="info" size={16}/></div>
-            <div style={{ fontSize: 12, color: PMS.ink, lineHeight: 1.55 }}>
-              <strong>Time saved:</strong> ước tính ~80 phút so với đăng ký từng khách qua flow individual reservation (18 khách × ~2.5 phút). bioId đã được gắn vào Profile và sẵn sàng cho Face ID check-in tự động.
+          {done && (
+            <div style={{ padding: "10px 18px", background: PMS.surfaceMuted, borderTop: `1px solid ${PMS.border}`, display: "flex", justifyContent: "flex-end", gap: 6 }}>
+              <Btn variant="primary" icon="arrowRight" onClick={() => window.GO && window.GO(5)}>
+                Xem kết quả →
+              </Btn>
             </div>
-          </div>
+          )}
         </div>
       </div>
-    </div>
+    </ItineraryShell>
   );
 }
-
-window.ScreenSummary = ScreenSummary;
-
+window.ScreenProcessing = ScreenProcessing;
 </script>
+
+<script type="text/babel">
+// SCREEN 05 — RESOLVED state: inline result banner + list updated with per-guest status
+function ScreenResolved() {
+  const data = window.PROTO_DATA;
+  const [bannerDismissed, setBannerDismissed] = React.useState(false);
+
+  // Compose resolved guest list with outcomes
+  const guests = React.useMemo(() => {
+    return data.guests.map(g => {
+      const file = data.pickedFiles.find(f => f.match === g.profileId && f.status === "matched")
+                || data.pickedFiles.find(f => f.status === "ambiguous" && Array.isArray(f.match) && f.match.includes(g.profileId));
+      const outcome = data.outcomes[g.profileId];
+      return { ...g, file, status: outcome.status, bioId: outcome.bioId, error: outcome.error, hint: outcome.hint };
+    });
+  }, []);
+
+  const counts = {
+    ok: guests.filter(g => g.status === "ok").length,
+    fail: guests.filter(g => g.status === "fail").length,
+    unmapped: 0, // skipped in batch
+  };
+
+  const headerBadge = (
+    <StatusPill tone="accent"><Icon name="face" size={11}/> Face ID {counts.ok}/{data.guests.length} sẵn sàng</StatusPill>
+  );
+
+  return (
+    <ItineraryShell activeTab="faceid" onTabChange={(t) => t === "activity" && window.GO && window.GO(6)} headerBadge={headerBadge}>
+      {/* Inline result banner */}
+      {!bannerDismissed && (
+        <div style={{
+          background: counts.fail > 0 ? PMS.warnSoft : PMS.okSoft,
+          border: `1px solid ${counts.fail > 0 ? "#EBC79A" : "#BFE0CF"}`,
+          borderRadius: 6, padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start"
+        }}>
+          <div style={{ color: counts.fail > 0 ? PMS.warn : PMS.ok, marginTop: 1 }}>
+            <Icon name={counts.fail > 0 ? "warn" : "check"} size={18}/>
+          </div>
+          <div style={{ flex: 1, fontSize: 12, color: PMS.ink, lineHeight: 1.55 }}>
+            <strong>Hoàn tất batch · {counts.ok} thành công · {counts.fail} lỗi · 28/12/2025 09:42</strong>
+            {counts.fail > 0 && (
+              <div style={{ marginTop: 4, color: PMS.inkMuted }}>
+                {counts.fail} guests lỗi: {guests.filter(g => g.status === "fail").map(g => `${g.name} (${g.error})`).join(", ")}
+              </div>
+            )}
+            <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
+              {counts.fail > 0 && <Btn size="sm" variant="primary" icon="refresh">Re-run failed</Btn>}
+              <Btn size="sm" icon="history" onClick={() => window.GO && window.GO(6)}>Xem chi tiết trong Activity Logs →</Btn>
+            </div>
+          </div>
+          <Btn size="sm" variant="ghost" icon="x" onClick={() => setBannerDismissed(true)}>Dismiss</Btn>
+        </div>
+      )}
+
+      {/* Stats banner */}
+      <div style={{ marginTop: bannerDismissed ? 0 : 12 }}>
+        <StatsBanner stats={[
+          { label: "Đã map",       value: counts.ok,   tone: "ok" },
+          { label: "Chưa map",     value: 0, tone: "neutral" },
+          { label: "Needs review", value: 0, tone: "neutral" },
+          { label: "Failed",       value: counts.fail, tone: "danger" },
+        ]}/>
+      </div>
+
+      {/* Quick actions */}
+      <div style={{
+        marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12,
+        background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, padding: "8px 10px"
+      }}>
+        <div style={{ fontSize: 12, color: PMS.inkMuted }}>
+          <strong style={{ color: PMS.ink }}>{counts.ok} / {data.guests.length}</strong> guests sẵn sàng Face ID check-in
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          <Btn size="sm" icon="upload" onClick={() => window.GO && window.GO(2)}>Upload thêm</Btn>
+          {counts.fail > 0 && <Btn size="sm" variant="primary" icon="refresh">↻ Re-run failed</Btn>}
+        </div>
+      </div>
+
+      {/* Guest list — resolved */}
+      <div style={{ marginTop: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, overflow: "hidden" }}>
+        <div style={{ maxHeight: 380, overflow: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <thead>
+              <tr style={{ background: PMS.surfaceMuted, color: PMS.inkMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.4, position: "sticky", top: 0 }}>
+                {["Conf. No", "Guest", "Face", "Status", ""].map((h, i) =>
+                  <th key={i} style={{ textAlign: "left", padding: "9px 12px", fontWeight: 500, borderBottom: `1px solid ${PMS.border}` }}>{h}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {guests.map((g) => (
+                <GuestRow key={g.confNo} guest={g} mode="resolved" file={g.file} status={g.status} onRetry={() => window.GO && window.GO(2)}/>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 12, fontSize: 11, color: PMS.inkSubtle, lineHeight: 1.7 }}>
+        <Icon name="lock" size={11}/> Time saved: ước tính ~80 phút so với register từng khách (18 × ~2.5 phút). bioId đã được lưu vào Profile.bioId. Audit log đầy đủ tại tab Activity Logs.
+      </div>
+    </ItineraryShell>
+  );
+}
+window.ScreenResolved = ScreenResolved;
+</script>
+
+<script type="text/babel">
+// SCREEN 06 — Activity Logs tab
+function ScreenActivityLogs() {
+  const data = window.PROTO_DATA;
+  const [expanded, setExpanded] = React.useState(new Set(["log-005"]));
+
+  const toggle = (id) => {
+    setExpanded(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const typeIcon = {
+    batch:   { icon: "scan",    color: PMS.brand },
+    manual:  { icon: "user",    color: PMS.accent },
+    revoke:  { icon: "trash",   color: PMS.danger },
+    consent: { icon: "lock",    color: PMS.warn },
+    open:    { icon: "folder",  color: PMS.inkMuted },
+  };
+  const typeLabel = {
+    batch: "Bulk batch",
+    manual: "Manual map",
+    revoke: "Revoke bioID",
+    consent: "PDPA consent",
+    open: "Itinerary opened",
+  };
+
+  return (
+    <ItineraryShell activeTab="activity" onTabChange={(t) => t === "faceid" && window.GO && window.GO(1)}>
+      <div style={{ background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, overflow: "hidden" }}>
+        <div style={{ padding: "10px 14px", borderBottom: `1px solid ${PMS.border}`, background: PMS.surfaceMuted, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>Activity Logs</div>
+            <div style={{ fontSize: 11, color: PMS.inkMuted, marginTop: 1 }}>
+              Audit log đầy đủ theo NĐ 13/2023/NĐ-CP — Điều 26 · {data.activityLogs.length} entries
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 6 }}>
+            <Btn size="sm" icon="download2">Export CSV</Btn>
+          </div>
+        </div>
+        <div>
+          {data.activityLogs.map((log) => {
+            const meta = typeIcon[log.type];
+            const isOpen = expanded.has(log.id);
+            return (
+              <div key={log.id} style={{ borderBottom: `1px solid ${PMS.border}` }}>
+                <div onClick={() => toggle(log.id)} style={{
+                  display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 14px", cursor: "pointer"
+                }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 6, background: meta.color + "15", color: meta.color, display: "grid", placeItems: "center", flexShrink: 0 }}>
+                    <Icon name={meta.icon} size={16}/>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>{typeLabel[log.type]}</span>
+                      <span style={{ fontSize: 11, color: PMS.inkSubtle, fontFamily: "ui-monospace, Menlo, monospace" }}>{log.timestamp}</span>
+                      <span style={{ fontSize: 11, color: PMS.inkMuted }}>· by {log.actor} ({log.actorIp})</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 3 }}>{log.detail}</div>
+                  </div>
+                  <div style={{ color: PMS.inkSubtle, padding: 4 }}>
+                    <Icon name={isOpen ? "chevronDown" : "chevronRight"} size={14}/>
+                  </div>
+                </div>
+                {isOpen && log.type === "batch" && (
+                  <div style={{ padding: "0 14px 14px 58px", background: PMS.surfaceMuted, borderTop: `1px solid ${PMS.border}` }}>
+                    <div style={{ padding: "10px 0", fontSize: 12, color: PMS.ink }}>
+                      <div style={{ marginBottom: 8 }}><strong>Summary:</strong> {log.summary.totalFiles} files · {log.summary.ok} ✓ · {log.summary.fail} ✗ · {log.summary.skipped} skipped · {log.summary.durationSec}s</div>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, background: PMS.surface, border: `1px solid ${PMS.border}` }}>
+                        <thead>
+                          <tr style={{ background: PMS.surface, color: PMS.inkMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>
+                            {["Conf. No", "Guest", "File", "Result", "bioId / Error"].map((h, i) =>
+                              <th key={i} style={{ textAlign: "left", padding: "6px 10px", fontWeight: 500, borderBottom: `1px solid ${PMS.border}` }}>{h}</th>)}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {data.guests.map(g => {
+                            const file = data.pickedFiles.find(f => f.match === g.profileId && f.status === "matched")
+                                      || data.pickedFiles.find(f => f.status === "ambiguous" && Array.isArray(f.match) && f.match.includes(g.profileId));
+                            const o = data.outcomes[g.profileId];
+                            return (
+                              <tr key={g.confNo} style={{ borderBottom: `1px solid ${PMS.border}` }}>
+                                <td style={{ padding: "5px 10px", fontFamily: "ui-monospace, Menlo, monospace", color: PMS.inkMuted }}>{g.confNo}</td>
+                                <td style={{ padding: "5px 10px" }}>{g.name}</td>
+                                <td style={{ padding: "5px 10px", color: PMS.inkMuted, fontFamily: "ui-monospace, Menlo, monospace", fontSize: 10 }}>{file ? file.file : "—"}</td>
+                                <td style={{ padding: "5px 10px" }}>
+                                  {o.status === "ok"
+                                    ? <span style={{ color: PMS.ok, fontWeight: 600 }}>✓ OK</span>
+                                    : <span style={{ color: PMS.danger, fontWeight: 600 }}>✗ FAIL</span>}
+                                </td>
+                                <td style={{ padding: "5px 10px", fontFamily: "ui-monospace, Menlo, monospace", fontSize: 10 }}>
+                                  {o.status === "ok"
+                                    ? <span style={{ color: PMS.ok }}>{o.bioId}</span>
+                                    : <span style={{ color: PMS.danger }}>{o.error}</span>}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                          {/* Unmapped files row */}
+                          {data.pickedFiles.filter(f => f.status === "unmapped").map(f => (
+                            <tr key={f.file} style={{ borderBottom: `1px solid ${PMS.border}`, background: PMS.bg }}>
+                              <td style={{ padding: "5px 10px", color: PMS.inkSubtle }}>—</td>
+                              <td style={{ padding: "5px 10px", color: PMS.inkSubtle, fontStyle: "italic" }}>(no match)</td>
+                              <td style={{ padding: "5px 10px", color: PMS.inkMuted, fontFamily: "ui-monospace, Menlo, monospace", fontSize: 10 }}>{f.file}</td>
+                              <td style={{ padding: "5px 10px" }}><span style={{ color: PMS.inkSubtle, fontWeight: 600 }}>SKIP</span></td>
+                              <td style={{ padding: "5px 10px", color: PMS.inkSubtle, fontStyle: "italic" }}>not matched</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+                {isOpen && log.type !== "batch" && (
+                  <div style={{ padding: "10px 14px 14px 58px", background: PMS.surfaceMuted, borderTop: `1px solid ${PMS.border}` }}>
+                    <pre style={{ margin: 0, fontSize: 11, color: PMS.ink, fontFamily: "ui-monospace, Menlo, monospace", whiteSpace: "pre-wrap" }}>
+{JSON.stringify(log.summary, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </ItineraryShell>
+  );
+}
+window.ScreenActivityLogs = ScreenActivityLogs;
+</script>
+
 </head>
 <body>
 <div id="root"></div>
@@ -1595,11 +1395,12 @@ window.ScreenSummary = ScreenSummary;
 const { useState, useEffect, useRef, useLayoutEffect } = React;
 
 const SCREENS = [
-  { id: "s1", label: "01 · Itinerary",       Component: ScreenItinerary,  width: 1440, height: 900 },
-  { id: "s2", label: "02 · Upload ZIP",      Component: ScreenUpload,     width: 1440, height: 900 },
-  { id: "s3", label: "03 · Review mapping",  Component: ScreenReview,     width: 1440, height: 980 },
-  { id: "s4", label: "04 · Processing",      Component: ScreenProcessing, width: 1440, height: 900 },
-  { id: "s5", label: "05 · Summary",         Component: ScreenSummary,    width: 1440, height: 980 },
+  { id: "s1", label: "01 · Default",          Component: ScreenDefault,       width: 1440, height: 980 },
+  { id: "s2", label: "02 · Upload + Match",   Component: ScreenUploading,     width: 1440, height: 900 },
+  { id: "s3", label: "03 · Reviewing",        Component: ScreenReviewing,     width: 1440, height: 1000 },
+  { id: "s4", label: "04 · Processing modal", Component: ScreenProcessing,    width: 1440, height: 900 },
+  { id: "s5", label: "05 · Resolved",         Component: ScreenResolved,      width: 1440, height: 1000 },
+  { id: "s6", label: "06 · Activity Logs",    Component: ScreenActivityLogs,  width: 1440, height: 980 },
 ];
 
 function App() {
@@ -1608,7 +1409,6 @@ function App() {
   const frameRef = useRef(null);
   const [scale, setScale] = useState(1);
 
-  // Expose navigation to in-screen buttons
   useEffect(() => {
     window.GO = (n) => {
       if (typeof n === "number" && n >= 1 && n <= SCREENS.length) setStep(n);
@@ -1617,9 +1417,6 @@ function App() {
 
   const current = SCREENS[step - 1];
 
-  // Fit-to-viewport scaling: shrink the 1440-wide stage so it fits the
-  // available area (and the full height of the screen). Recalculate on
-  // resize and on screen change (different heights).
   useLayoutEffect(() => {
     const compute = () => {
       const frame = frameRef.current;
@@ -1636,7 +1433,6 @@ function App() {
     return () => window.removeEventListener("resize", compute);
   }, [step]);
 
-  // Keyboard: ← → to navigate
   useEffect(() => {
     const onKey = (e) => {
       if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.isContentEditable)) return;
@@ -1650,7 +1446,7 @@ function App() {
   return (
     <>
       <div className="nav-bar">
-        <span className="title">Bulk Face ID Registration · Group Reservation</span>
+        <span className="title">v2 · Face ID Registration · Itinerary entry</span>
         {SCREENS.map((s, i) => (
           <span key={s.id}
                 className={"step" + (i + 1 === step ? " active" : "")}
