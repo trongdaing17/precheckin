@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8"/>
-<title>Bulk Face ID Registration — Interactive Prototype (v2)</title>
+<title>Bulk Face ID Registration — Interactive Prototype (v2.1)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,6 +46,7 @@
 
   @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1);} 50% { opacity: 0.35; transform: scale(0.7);} }
   @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes toastIn { from { transform: translate(-50%, 20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
 </style>
 
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
@@ -53,22 +54,16 @@
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
 <script>
-// v2 mock data — guest-centric, confNo separate from profileId
 window.PROTO_DATA = {
   itinerary: {
+    itineraryNo: "IT-12359140",
     groupCode: "GRP-2025-1144",
-    itineraryNo: "ITN-2025-1144",
     groupName: "Vietravel Inbound — Hanoi Heritage Tour",
     company: "Vietravel JSC",
     arrival: "Dec 28, 2025",
     departure: "Dec 31, 2025",
-    nights: 3,
-    rooms: 18,
-    pax: 18,
-    status: "DEFINITE",
+    rooms: 18, pax: 18, status: "DEFINITE",
     sic: "Linh T. Pham",
-    market: "FIT-INB",
-    source: "TRA-AGT",
   },
   guests: [
     { confNo: "CNF-25-1144-01", profileId: "P-00481", name: "Nguyễn Thị Vân",     room: "1208" },
@@ -113,71 +108,41 @@ window.PROTO_DATA = {
     { file: "phamthuyduong.jpg",            size: "402 KB", normalized: "phamthuyduong",  match: null,    status: "unmapped" },
   ],
   outcomes: {
-    "P-00481": { status: "ok",   bioId: "BIO-7C4A91" },
-    "P-00482": { status: "ok",   bioId: "BIO-7C4A92" },
-    "P-00483": { status: "ok",   bioId: "BIO-7C4A93" },
-    "P-00484": { status: "ok",   bioId: "BIO-7C4A94" },
-    "P-00485": { status: "ok",   bioId: "BIO-7C4A95" },
-    "P-00486": { status: "ok",   bioId: "BIO-7C4A96" },
-    "P-00487": { status: "ok",   bioId: "BIO-7C4A97" },
-    "P-00488": { status: "ok",   bioId: "BIO-7C4A98" },
-    "P-00489": { status: "ok",   bioId: "BIO-7C4A99" },
-    "P-00490": { status: "ok",   bioId: "BIO-7C4A9A" },
-    "P-00491": { status: "ok",   bioId: "BIO-7C4A9B" },
-    "P-00492": { status: "ok",   bioId: "BIO-7C4A9C" },
-    "P-00493": { status: "ok",   bioId: "BIO-7C4A9D" },
-    "P-00494": { status: "ok",   bioId: "BIO-7C4A9E" },
-    "P-00495": { status: "ok",   bioId: "BIO-7C4A9F" },
-    "P-00496": { status: "ok",   bioId: "BIO-7C4AA0" },
-    "P-00497": { status: "fail", error: "LOW_QUALITY",    hint: "Ảnh quá mờ — yêu cầu khách gửi ảnh khác" },
-    "P-00498": { status: "fail", error: "MULTIPLE_FACES", hint: "Phát hiện 2 khuôn mặt — crop lại" },
+    "P-00481": { status: "registered",  bioId: "BIO-7C4A91" },
+    "P-00482": { status: "registered",  bioId: "BIO-7C4A92" },
+    "P-00483": { status: "registered",  bioId: "BIO-7C4A93" },
+    "P-00484": { status: "registered",  bioId: "BIO-7C4A94" },
+    "P-00485": { status: "registered",  bioId: "BIO-7C4A95" },
+    "P-00486": { status: "registered",  bioId: "BIO-7C4A96" },
+    "P-00487": { status: "registered",  bioId: "BIO-7C4A97" },
+    "P-00488": { status: "registered",  bioId: "BIO-7C4A98" },
+    "P-00489": { status: "registered",  bioId: "BIO-7C4A99" },
+    "P-00490": { status: "registered",  bioId: "BIO-7C4A9A" },
+    "P-00491": { status: "registered",  bioId: "BIO-7C4A9B" },
+    "P-00492": { status: "registered",  bioId: "BIO-7C4A9C" },
+    "P-00493": { status: "registered",  bioId: "BIO-7C4A9D" },
+    "P-00494": { status: "registered",  bioId: "BIO-7C4A9E" },
+    "P-00495": { status: "photo-uploaded" }, // demo: photo uploaded but bioId not yet attempted
+    "P-00496": { status: "registered",  bioId: "BIO-7C4AA0" },
+    "P-00497": { status: "failed",      error: "LOW_QUALITY",    hint: "Ảnh quá mờ — yêu cầu khách gửi ảnh khác" },
+    "P-00498": { status: "failed",      error: "MULTIPLE_FACES", hint: "Phát hiện 2 khuôn mặt — crop lại" },
   },
   activityLogs: [
-    {
-      id: "log-005",
-      type: "batch",
-      timestamp: "2025-12-28 09:42:16",
-      actor: "phuong.nv",
-      actorIp: "10.18.4.27",
-      summary: { totalFiles: 20, ok: 16, fail: 2, skipped: 2, durationSec: 12.4 },
-      detail: "Bulk batch · 20 files uploaded · 16 bioId tạo · 2 fail (LOW_QUALITY, MULTIPLE_FACES) · 2 unmapped files skip",
-    },
-    {
-      id: "log-004",
-      type: "manual",
-      timestamp: "2025-12-27 17:45:02",
-      actor: "phuong.nv",
-      actorIp: "10.18.4.27",
+    { id: "log-005", type: "batch", timestamp: "2025-12-28 09:42:16", actor: "phuong.nv", actorIp: "10.18.4.27",
+      summary: { totalFiles: 20, ok: 15, fail: 2, skipped: 2, durationSec: 12.4 },
+      detail: "Bulk batch · 20 files uploaded · 15 bioId tạo · 1 photo uploaded · 2 fail · 2 unmapped files skip" },
+    { id: "log-004", type: "manual", timestamp: "2025-12-27 17:45:02", actor: "phuong.nv", actorIp: "10.18.4.27",
       summary: { guest: "Nguyễn Văn Z", bioId: "BIO-7C4A8E" },
-      detail: "Individual register · guest Nguyễn Văn Z (P-00479) · bioId BIO-7C4A8E",
-    },
-    {
-      id: "log-003",
-      type: "revoke",
-      timestamp: "2025-12-26 09:12:33",
-      actor: "linh.tp",
-      actorIp: "10.18.4.5",
+      detail: "Individual register · guest Nguyễn Văn Z (P-00479) · bioId BIO-7C4A8E" },
+    { id: "log-003", type: "revoke", timestamp: "2025-12-26 09:12:33", actor: "linh.tp", actorIp: "10.18.4.5",
       summary: { guest: "Trần Thị B", reason: "Re-registration after photo update" },
-      detail: "Revoke bioId BIO-7C4A29 cho guest Trần Thị B (P-00475) — reason: re-registration",
-    },
-    {
-      id: "log-002",
-      type: "consent",
-      timestamp: "2025-12-25 14:18:09",
-      actor: "phuong.nv",
-      actorIp: "10.18.4.27",
+      detail: "Revoke bioId BIO-7C4A29 cho guest Trần Thị B (P-00475) — reason: re-registration" },
+    { id: "log-002", type: "consent", timestamp: "2025-12-25 14:18:09", actor: "phuong.nv", actorIp: "10.18.4.27",
       summary: { scope: "group", method: "tour-operator-email" },
-      detail: "PDPA consent confirmed cho cả đoàn — source: tour operator email attachment",
-    },
-    {
-      id: "log-001",
-      type: "open",
-      timestamp: "2025-12-25 14:17:42",
-      actor: "phuong.nv",
-      actorIp: "10.18.4.27",
-      summary: { itinerary: "GRP-2025-1144" },
-      detail: "Itinerary GRP-2025-1144 opened",
-    },
+      detail: "PDPA consent confirmed cho cả đoàn — source: tour operator email attachment" },
+    { id: "log-001", type: "open", timestamp: "2025-12-25 14:17:42", actor: "phuong.nv", actorIp: "10.18.4.27",
+      summary: { itinerary: "IT-12359140" },
+      detail: "Itinerary IT-12359140 opened" },
   ],
 };
 </script>
@@ -199,37 +164,40 @@ const pms = PMS;
 const Icon = ({ name, size = 16, stroke = "currentColor" }) => {
   const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke, strokeWidth: 1.6, strokeLinecap: "round", strokeLinejoin: "round" };
   const paths = {
-    home: <><path d="M3 11.5 12 4l9 7.5" /><path d="M5 10v10h14V10" /></>,
-    calendar: <><rect x="3" y="5" width="18" height="16" rx="1.5" /><path d="M3 10h18M8 3v4M16 3v4" /></>,
-    users: <><circle cx="9" cy="8" r="3.2" /><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" /><circle cx="17" cy="9" r="2.6" /><path d="M15 20c0-2.5 2-4.5 4.5-4.5" /></>,
-    door: <><rect x="6" y="3" width="12" height="18" rx="0.5" /><circle cx="14.5" cy="12" r="0.8" fill="currentColor" /></>,
-    cash: <><rect x="2" y="6" width="20" height="12" rx="1.5" /><circle cx="12" cy="12" r="3" /></>,
-    chart: <><path d="M4 20V8M10 20v-6M16 20V4M22 20H2" /></>,
-    settings: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.65 1.65 0 0 0-1.8-.3 1.65 1.65 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.65 1.65 0 0 0-1.1-1.5 1.65 1.65 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.65 1.65 0 0 0 .3-1.8 1.65 1.65 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.65 1.65 0 0 0 1.5-1.1 1.65 1.65 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.65 1.65 0 0 0 1.8.3H9a1.65 1.65 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.65 1.65 0 0 0 1 1.5 1.65 1.65 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.65 1.65 0 0 0-.3 1.8V9a1.65 1.65 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.65 1.65 0 0 0-1.5 1z" /></>,
-    search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></>,
-    bell: <><path d="M6 8a6 6 0 1 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9z" /><path d="M10 21a2 2 0 0 0 4 0" /></>,
-    upload: <><path d="M12 16V4M6 10l6-6 6 6" /><path d="M4 20h16" /></>,
-    download: <><path d="M12 4v12M6 10l6 6 6-6" /><path d="M4 20h16" /></>,
-    image: <><rect x="3" y="5" width="18" height="14" rx="1.5" /><circle cx="8" cy="10" r="1.5" /><path d="m21 16-5-5-9 9" /></>,
-    check: <><path d="m5 13 4 4L19 7" /></>,
-    x: <><path d="m6 6 12 12M18 6 6 18" /></>,
-    info: <><circle cx="12" cy="12" r="9" /><path d="M12 8h.01M11 12h1v5h1" /></>,
-    warn: <><path d="M12 3 2 21h20L12 3z" /><path d="M12 9v6M12 18h.01" /></>,
-    arrowRight: <><path d="M5 12h14M13 6l6 6-6 6" /></>,
-    chevronDown: <><path d="m6 9 6 6 6-6" /></>,
-    chevronRight: <><path d="m9 6 6 6-6 6" /></>,
-    plus: <><path d="M12 5v14M5 12h14" /></>,
-    edit: <><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" /></>,
-    face: <><circle cx="12" cy="12" r="9" /><circle cx="9" cy="10" r="0.8" fill="currentColor" /><circle cx="15" cy="10" r="0.8" fill="currentColor" /><path d="M9 15c1.5 1.2 4.5 1.2 6 0" /></>,
-    scan: <><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" /><circle cx="12" cy="12" r="3.5" /></>,
-    lock: <><rect x="5" y="11" width="14" height="9" rx="1.5" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>,
-    refresh: <><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16" /><path d="M3 21v-5h5" /></>,
-    skip: <><path d="M5 4v16M19 4v16M9 6l8 6-8 6V6z" /></>,
-    user: <><circle cx="12" cy="8" r="3.5" /><path d="M5 21c0-3.5 3-6.5 7-6.5s7 3 7 6.5" /></>,
-    trash: <><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" /></>,
-    download2: <><path d="M12 3v12M7 10l5 5 5-5" /><path d="M5 21h14" /></>,
-    history: <><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v5h5" /><path d="M12 7v5l3 2" /></>,
-    folder: <><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" /></>,
+    home: <><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></>,
+    calendar: <><rect x="3" y="5" width="18" height="16" rx="1.5"/><path d="M3 10h18M8 3v4M16 3v4"/></>,
+    users: <><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15 20c0-2.5 2-4.5 4.5-4.5"/></>,
+    door: <><rect x="6" y="3" width="12" height="18" rx="0.5"/><circle cx="14.5" cy="12" r="0.8" fill="currentColor"/></>,
+    cash: <><rect x="2" y="6" width="20" height="12" rx="1.5"/><circle cx="12" cy="12" r="3"/></>,
+    chart: <><path d="M4 20V8M10 20v-6M16 20V4M22 20H2"/></>,
+    settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.65 1.65 0 0 0-1.8-.3 1.65 1.65 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.65 1.65 0 0 0-1.1-1.5 1.65 1.65 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.65 1.65 0 0 0 .3-1.8 1.65 1.65 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.65 1.65 0 0 0 1.5-1.1 1.65 1.65 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.65 1.65 0 0 0 1.8.3H9a1.65 1.65 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.65 1.65 0 0 0 1 1.5 1.65 1.65 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.65 1.65 0 0 0-.3 1.8V9a1.65 1.65 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.65 1.65 0 0 0-1.5 1z"/></>,
+    search: <><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></>,
+    bell: <><path d="M6 8a6 6 0 1 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9z"/><path d="M10 21a2 2 0 0 0 4 0"/></>,
+    upload: <><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 20h16"/></>,
+    download: <><path d="M12 4v12M6 10l6 6 6-6"/><path d="M4 20h16"/></>,
+    image: <><rect x="3" y="5" width="18" height="14" rx="1.5"/><circle cx="8" cy="10" r="1.5"/><path d="m21 16-5-5-9 9"/></>,
+    check: <><path d="m5 13 4 4L19 7"/></>,
+    x: <><path d="m6 6 12 12M18 6 6 18"/></>,
+    info: <><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></>,
+    warn: <><path d="M12 3 2 21h20L12 3z"/><path d="M12 9v6M12 18h.01"/></>,
+    arrowRight: <><path d="M5 12h14M13 6l6 6-6 6"/></>,
+    chevronDown: <><path d="m6 9 6 6 6-6"/></>,
+    chevronRight: <><path d="m9 6 6 6-6 6"/></>,
+    plus: <><path d="M12 5v14M5 12h14"/></>,
+    edit: <><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></>,
+    face: <><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="0.8" fill="currentColor"/><circle cx="15" cy="10" r="0.8" fill="currentColor"/><path d="M9 15c1.5 1.2 4.5 1.2 6 0"/></>,
+    scan: <><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><circle cx="12" cy="12" r="3.5"/></>,
+    lock: <><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></>,
+    refresh: <><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16"/><path d="M3 21v-5h5"/></>,
+    skip: <><path d="M5 4v16M19 4v16M9 6l8 6-8 6V6z"/></>,
+    user: <><circle cx="12" cy="8" r="3.5"/><path d="M5 21c0-3.5 3-6.5 7-6.5s7 3 7 6.5"/></>,
+    trash: <><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></>,
+    download2: <><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></>,
+    history: <><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></>,
+    folder: <><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></>,
+    qr: <><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3z"/></>,
+    more: <><circle cx="12" cy="5" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="19" r="1" fill="currentColor"/></>,
+    eye: <><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></>,
   };
   return <svg {...common}>{paths[name]}</svg>;
 };
@@ -283,16 +251,6 @@ const SideNav = ({ active = "groups" }) => {
   );
 };
 
-const Crumb = ({ items }) =>
-  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: pms.inkMuted }}>
-    {items.map((it, i) =>
-      <React.Fragment key={i}>
-        <span style={{ color: i === items.length - 1 ? pms.ink : pms.inkMuted, fontWeight: i === items.length - 1 ? 600 : 400 }}>{it}</span>
-        {i < items.length - 1 && <Icon name="chevronRight" size={11}/>}
-      </React.Fragment>
-    )}
-  </div>;
-
 const StatusPill = ({ tone = "neutral", children, dot = true }) => {
   const m = {
     neutral: { bg: "#EEF1F4", fg: pms.ink, dot: pms.inkSubtle },
@@ -303,7 +261,7 @@ const StatusPill = ({ tone = "neutral", children, dot = true }) => {
     accent: { bg: pms.accentSoft, fg: pms.accent, dot: pms.accent },
   }[tone];
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "2px 8px", background: m.bg, color: m.fg, borderRadius: 999, fontSize: 11, fontWeight: 600, lineHeight: 1.5 }}>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "2px 8px", background: m.bg, color: m.fg, borderRadius: 999, fontSize: 11, fontWeight: 600, lineHeight: 1.5, whiteSpace: "nowrap" }}>
       {dot && <span style={{ width: 6, height: 6, borderRadius: "50%", background: m.dot }}/>}
       {children}
     </span>
@@ -328,13 +286,6 @@ const Btn = ({ variant = "default", icon, children, onClick, disabled, size = "m
   );
 };
 
-const Field = ({ label, children, hint }) =>
-  <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-    <div style={{ fontSize: 11, fontWeight: 500, color: pms.inkMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>{label}</div>
-    <div style={{ fontSize: 13, color: pms.ink }}>{children}</div>
-    {hint && <div style={{ fontSize: 11, color: pms.inkSubtle }}>{hint}</div>}
-  </div>;
-
 const FacePlaceholder = ({ size = 36, name = "", state = "default" }) => {
   const palette = [["#E6F0F7","#0F5A8A"],["#FBEFE0","#B6601B"],["#E2F2EE","#0E7C66"],["#FBE8E5","#B0372F"],["#EEEAF7","#5A3D9E"],["#F2EAE0","#7A5530"]];
   let h = 0;
@@ -356,13 +307,65 @@ const FacePlaceholder = ({ size = 36, name = "", state = "default" }) => {
   );
 };
 
-window.PMS = PMS; window.Icon = Icon; window.TopBar = TopBar; window.SideNav = SideNav; window.Crumb = Crumb;
-window.StatusPill = StatusPill; window.Btn = Btn; window.Field = Field; window.FacePlaceholder = FacePlaceholder;
+// ===== Dropdown menu for row actions =====
+function DropdownMenu({ children, items, align = "right" }) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    if (!open) return;
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+  return (
+    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
+      <div onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }} style={{ cursor: "pointer", display: "inline-flex" }}>
+        {children}
+      </div>
+      {open && (
+        <div style={{ position: "absolute", top: "calc(100% + 4px)", [align]: 0, zIndex: 40, minWidth: 200, background: pms.surface, border: `1px solid ${pms.borderStrong}`, borderRadius: 6, boxShadow: "0 10px 28px rgba(17,32,46,0.18)", overflow: "hidden", padding: 4 }}>
+          {items.map((item, i) => (
+            item.divider ? <div key={i} style={{ height: 1, background: pms.border, margin: "4px 0" }}/> :
+            item.header ? <div key={i} style={{ fontSize: 10, color: pms.inkSubtle, textTransform: "uppercase", letterSpacing: 0.6, padding: "6px 10px 2px" }}>{item.header}</div> :
+            <div key={i} onClick={() => { setOpen(false); item.onClick && item.onClick(); }}
+              style={{ padding: "7px 10px", fontSize: 12, color: item.danger ? pms.danger : pms.ink, cursor: "pointer", borderRadius: 4, display: "flex", alignItems: "center", gap: 8 }}
+              onMouseEnter={(e) => e.currentTarget.style.background = pms.surfaceMuted}
+              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+              {item.icon && <Icon name={item.icon} size={13} stroke={item.danger ? pms.danger : pms.inkMuted}/>}
+              <span style={{ flex: 1 }}>{item.label}</span>
+              {item.hint && <span style={{ fontSize: 10, color: pms.inkSubtle }}>{item.hint}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===== Toast =====
+function Toast({ message, tone = "ok", onClose }) {
+  React.useEffect(() => {
+    if (!message) return;
+    const t = setTimeout(onClose, 2400);
+    return () => clearTimeout(t);
+  }, [message, onClose]);
+  if (!message) return null;
+  const bg = tone === "ok" ? pms.ok : tone === "warn" ? pms.warn : tone === "danger" ? pms.danger : pms.brand;
+  return (
+    <div style={{ position: "absolute", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 100, background: bg, color: "#fff", borderRadius: 6, padding: "10px 16px", fontSize: 13, fontWeight: 500, boxShadow: "0 10px 28px rgba(17,32,46,0.24)", animation: "toastIn 0.2s ease-out" }}>
+      {message}
+    </div>
+  );
+}
+
+window.PMS = PMS; window.Icon = Icon; window.TopBar = TopBar; window.SideNav = SideNav;
+window.StatusPill = StatusPill; window.Btn = Btn; window.FacePlaceholder = FacePlaceholder;
+window.DropdownMenu = DropdownMenu; window.Toast = Toast;
 </script>
 
 <script type="text/babel">
-// ===== Itinerary Shell — header + 4 tabs (default Face ID Registration) =====
-function ItineraryShell({ activeTab = "faceid", onTabChange, children, headerBadge }) {
+// ===== Itinerary Shell — header card removed, new breadcrumb format =====
+function ItineraryShell({ activeTab = "faceid", onTabChange, children, statusBadge, toast, onToastClose }) {
   const it = window.PROTO_DATA.itinerary;
   const setTab = onTabChange || (() => {});
   return (
@@ -371,34 +374,24 @@ function ItineraryShell({ activeTab = "faceid", onTabChange, children, headerBad
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
         <SideNav active="groups"/>
         <div style={{ flex: 1, overflow: "auto", padding: "14px 18px 18px", position: "relative" }}>
-          <Crumb items={["Front Office", "Group Reservation", `${it.itineraryNo} — ${it.groupName}`]}/>
-          <div style={{ marginTop: 10, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, padding: "14px 16px" }}>
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: PMS.ink }}>{it.groupName}</div>
-                  <StatusPill tone="ok">{it.status}</StatusPill>
-                  {headerBadge}
-                </div>
-                <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 3 }}>
-                  {it.itineraryNo} · {it.groupCode} · {it.company} · SIC: {it.sic}
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 6 }}>
-                <Btn icon="edit">Edit details</Btn>
-                <Btn icon="download">Export rooming list</Btn>
-              </div>
+
+          {/* New breadcrumb header (matches Itinerary detail page format) */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <div style={{ fontSize: 19, fontWeight: 700, color: PMS.ink }}>Itinerary detail</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: PMS.inkMuted }}>
+              <Icon name="home" size={13} stroke={PMS.inkMuted}/>
+              <Icon name="chevronRight" size={11} stroke={PMS.inkSubtle}/>
+              <span>Reservation</span>
+              <Icon name="chevronRight" size={11} stroke={PMS.inkSubtle}/>
+              <span style={{ color: PMS.ink, fontWeight: 500 }}>No. {it.itineraryNo}</span>
+              <span style={{ color: PMS.inkSubtle, marginLeft: 2, display: "inline-flex", alignItems: "center" }}>
+                <Icon name="qr" size={14} stroke={PMS.inkSubtle}/>
+              </span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 16, marginTop: 14, paddingTop: 14, borderTop: `1px solid ${PMS.border}` }}>
-              <Field label="Arrival">{it.arrival}</Field>
-              <Field label="Departure">{it.departure}</Field>
-              <Field label="Nights">{it.nights}</Field>
-              <Field label="Rooms">{it.rooms}</Field>
-              <Field label="Pax">{it.pax}</Field>
-              <Field label="Market">{it.market}</Field>
-              <Field label="Source">{it.source}</Field>
-            </div>
+            {statusBadge && <div style={{ marginLeft: 4 }}>{statusBadge}</div>}
           </div>
+
+          {/* Tabs */}
           <div style={{ marginTop: 14, display: "flex", gap: 4, borderBottom: `1px solid ${PMS.border}` }}>
             {[["info", "Itinerary info"], ["rooms", "Room List"], ["faceid", "Face ID Registration"], ["activity", "Activity Logs"]].map(([k, l]) => {
               const active = k === activeTab;
@@ -409,7 +402,12 @@ function ItineraryShell({ activeTab = "faceid", onTabChange, children, headerBad
               );
             })}
           </div>
+
+          {/* Tab content */}
           <div style={{ marginTop: 12 }}>{children}</div>
+
+          {/* Toast */}
+          {toast && <Toast message={toast.message} tone={toast.tone} onClose={onToastClose}/>}
         </div>
       </div>
     </div>
@@ -419,13 +417,12 @@ window.ItineraryShell = ItineraryShell;
 </script>
 
 <script type="text/babel">
-// ===== Stats banner (consistent across default / reviewing / resolved) =====
-// 4 stats reflect persistent Face ID state of the group's guests.
+// ===== Stats banner =====
 function StatsBanner({ stats }) {
   return (
     <div style={{ background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, display: "grid", gridTemplateColumns: `repeat(${stats.length}, 1fr)`, overflow: "hidden" }}>
       {stats.map((s, i) => {
-        const color = s.tone === "ok" ? PMS.ok : s.tone === "warn" ? PMS.warn : s.tone === "danger" ? PMS.danger : PMS.ink;
+        const color = s.tone === "ok" ? PMS.ok : s.tone === "warn" ? PMS.warn : s.tone === "danger" ? PMS.danger : s.tone === "brand" ? PMS.brand : PMS.ink;
         return (
           <div key={i} style={{ padding: "12px 14px", borderRight: i < stats.length - 1 ? `1px solid ${PMS.border}` : "none", display: "flex", flexDirection: "column", gap: 4 }}>
             <div style={{ fontSize: 11, color: PMS.inkMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>{s.label}</div>
@@ -437,62 +434,68 @@ function StatsBanner({ stats }) {
   );
 }
 
-// ===== Status cell — single column, content depends on mode =====
-// faceIdState: "none" | "registered" | "failed" (persistent)
-// reviewState (only when mode==="reviewing"): "matched" | "ambiguous" | "no-photo"
-function StatusCell({ mode, faceIdState, reviewState, bioId, error }) {
+// ===== Registration Status cell =====
+// regStatus: "unregistered" | "photo-uploaded" | "registered" | "failed"
+// In Reviewing mode, also pass reviewState ("matched" | "ambiguous" | "no-photo") to show batch sub-status
+function RegistrationStatusCell({ mode, regStatus, reviewState, bioId, error, skipped }) {
+  if (skipped) {
+    return <StatusPill tone="neutral" dot={false}>⊝ Skipped</StatusPill>;
+  }
+
+  const persistent = (() => {
+    if (regStatus === "registered") return <StatusPill tone="ok"><Icon name="check" size={10}/> Registered</StatusPill>;
+    if (regStatus === "photo-uploaded") return <StatusPill tone="brand">📷 Photo Uploaded</StatusPill>;
+    if (regStatus === "failed") return <StatusPill tone="danger">✗ Registration Failed</StatusPill>;
+    return <StatusPill tone="warn" dot={false}>◯ Unregistered</StatusPill>;
+  })();
+
+  // In Reviewing mode, show batch sub-status under the persistent pill
   if (mode === "reviewing") {
-    let primary;
-    if (reviewState === "matched") primary = <StatusPill tone="ok">✓ Mapped</StatusPill>;
-    else if (reviewState === "ambiguous") primary = <StatusPill tone="warn">⚠ Needs review</StatusPill>;
-    else primary = <StatusPill tone="neutral" dot={false}>◯ No photo</StatusPill>;
+    let batchPill = null;
+    if (reviewState === "matched") batchPill = <span style={{ fontSize: 10, color: PMS.ok }}>📷 Photo uploaded (batch)</span>;
+    else if (reviewState === "ambiguous") batchPill = <span style={{ fontSize: 10, color: PMS.warn }}>⚠ Needs review (batch)</span>;
+    else batchPill = <span style={{ fontSize: 10, color: PMS.inkSubtle }}>◯ No photo (batch)</span>;
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-        {primary}
-        <div style={{ fontSize: 10, color: PMS.inkSubtle, paddingLeft: 2 }}>
-          Face ID: {faceIdState === "registered" ? "Đã đăng ký" : faceIdState === "failed" ? "Failed" : "Chưa đăng ký"}
-        </div>
+        {persistent}
+        <div style={{ paddingLeft: 2 }}>{batchPill}</div>
       </div>
     );
   }
-  if (mode === "resolved") {
-    if (faceIdState === "registered") {
+
+  // In Resolved mode with registered/failed, show bioId/error as sub-line
+  if (mode === "resolved" || mode === "default") {
+    if (regStatus === "registered" && bioId) {
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          <StatusPill tone="ok"><Icon name="check" size={10}/> Đã đăng ký</StatusPill>
+          {persistent}
           <div style={{ fontSize: 10, color: PMS.inkSubtle, fontFamily: "ui-monospace, Menlo, monospace", paddingLeft: 2 }}>{bioId}</div>
         </div>
       );
     }
-    if (faceIdState === "failed") {
-      return <StatusPill tone="danger">✗ {error || "Failed"}</StatusPill>;
+    if (regStatus === "failed" && error) {
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          {persistent}
+          <div style={{ fontSize: 10, color: PMS.danger, paddingLeft: 2 }}>{error}</div>
+        </div>
+      );
     }
   }
-  // default mode (or fallback)
-  if (faceIdState === "registered") {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-        <StatusPill tone="ok"><Icon name="check" size={10}/> Đã đăng ký</StatusPill>
-        {bioId && <div style={{ fontSize: 10, color: PMS.inkSubtle, fontFamily: "ui-monospace, Menlo, monospace", paddingLeft: 2 }}>{bioId}</div>}
-      </div>
-    );
-  }
-  if (faceIdState === "failed") return <StatusPill tone="danger">✗ {error || "Failed"}</StatusPill>;
-  return <StatusPill tone="warn" dot={false}>◯ Chưa đăng ký</StatusPill>;
+
+  return persistent;
 }
 
-// ===== Guest row — single shared component across default / reviewing / resolved =====
-// `mode` controls Face cell + action buttons; Status cell uses StatusCell.
-function GuestRow({ guest, mode, file, reviewState, faceIdState, bioId, error, onRetry }) {
-  // Face cell visualization
-  const faceCell = (() => {
-    if (file && (mode === "reviewing" || mode === "resolved") && faceIdState !== "none") {
-      return <FacePlaceholder size={36} name={file.file.replace(/\.[a-z]+$/i, "")}/>;
-    }
-    if (file && mode === "reviewing") {
-      return <FacePlaceholder size={36} name={file.file.replace(/\.[a-z]+$/i, "")}/>;
-    }
-    if (mode === "resolved" && faceIdState === "failed" && file) {
+window.StatsBanner = StatsBanner;
+window.RegistrationStatusCell = RegistrationStatusCell;
+</script>
+
+<script type="text/babel">
+// ===== Guest Row — single shared component =====
+function GuestRow({ guest, mode, file, reviewState, regStatus, bioId, error, skipped, onAction }) {
+  const photoCell = (() => {
+    if (skipped) return <FacePlaceholder size={36} name="?" state="missing"/>;
+    if (regStatus === "failed" && file) {
       return (
         <div style={{ position: "relative" }}>
           <FacePlaceholder size={36} name={file.file.replace(/\.[a-z]+$/i, "")}/>
@@ -502,11 +505,89 @@ function GuestRow({ guest, mode, file, reviewState, faceIdState, bioId, error, o
         </div>
       );
     }
+    if (file) return <FacePlaceholder size={36} name={file.file.replace(/\.[a-z]+$/i, "")}/>;
     return <FacePlaceholder size={36} name="?" state="missing"/>;
   })();
 
+  // ----- Action menu items per (mode, state) -----
+  const menuItems = (() => {
+    if (skipped) {
+      return [
+        { label: "Restore (un-skip)", icon: "refresh", onClick: () => onAction && onAction("unskip", guest) },
+      ];
+    }
+    if (mode === "default") {
+      return [
+        { header: "Actions" },
+        { label: "Upload photo for this guest", icon: "upload", onClick: () => onAction && onAction("uploadSingle", guest) },
+        { label: "View guest profile", icon: "user", onClick: () => onAction && onAction("viewProfile", guest) },
+      ];
+    }
+    if (mode === "reviewing") {
+      if (reviewState === "matched") {
+        return [
+          { header: "Photo actions" },
+          { label: "Re-map photo…", icon: "edit", onClick: () => onAction && onAction("remap", guest) },
+          { label: "Remove photo from batch", icon: "trash", onClick: () => onAction && onAction("removePhoto", guest) },
+          { divider: true },
+          { label: "Skip this guest", icon: "skip", danger: true, onClick: () => onAction && onAction("skip", guest) },
+        ];
+      }
+      if (reviewState === "ambiguous") {
+        return [
+          { header: "Resolve ambiguity" },
+          { label: "Pick this guest for the photo", icon: "check", onClick: () => onAction && onAction("pickAmbiguous", guest) },
+          { label: "Open candidate picker…", icon: "users", onClick: () => onAction && onAction("openCandidates", guest) },
+          { divider: true },
+          { label: "Skip this guest", icon: "skip", danger: true, onClick: () => onAction && onAction("skip", guest) },
+        ];
+      }
+      // no-photo
+      return [
+        { header: "Photo not found" },
+        { label: "Gán ảnh từ pool…", icon: "image", onClick: () => onAction && onAction("assignFromPool", guest) },
+        { label: "Upload new photo for this guest", icon: "upload", onClick: () => onAction && onAction("uploadSingle", guest) },
+        { divider: true },
+        { label: "Skip this guest", icon: "skip", danger: true, onClick: () => onAction && onAction("skip", guest) },
+      ];
+    }
+    if (mode === "resolved") {
+      if (regStatus === "registered") {
+        return [
+          { header: "bioId actions" },
+          { label: "View bioId detail", icon: "eye", onClick: () => onAction && onAction("viewBio", guest) },
+          { label: "Re-register (overwrite)", icon: "refresh", onClick: () => onAction && onAction("reregister", guest) },
+          { divider: true },
+          { label: "Revoke bioId", icon: "trash", danger: true, onClick: () => onAction && onAction("revoke", guest) },
+        ];
+      }
+      if (regStatus === "failed") {
+        return [
+          { header: "Recovery" },
+          { label: "Re-try with new photo", icon: "upload", onClick: () => onAction && onAction("retry", guest) },
+          { label: "Re-run with same photo", icon: "refresh", onClick: () => onAction && onAction("rerun", guest) },
+          { divider: true },
+          { label: "Mark as skipped", icon: "skip", danger: true, onClick: () => onAction && onAction("skip", guest) },
+        ];
+      }
+      if (regStatus === "photo-uploaded") {
+        return [
+          { header: "Photo uploaded, awaiting bioId" },
+          { label: "Trigger registration now", icon: "scan", onClick: () => onAction && onAction("triggerRegister", guest) },
+          { label: "Replace photo", icon: "edit", onClick: () => onAction && onAction("remap", guest) },
+          { divider: true },
+          { label: "Skip this guest", icon: "skip", danger: true, onClick: () => onAction && onAction("skip", guest) },
+        ];
+      }
+      return [
+        { label: "Upload photo", icon: "upload", onClick: () => onAction && onAction("uploadSingle", guest) },
+      ];
+    }
+    return [];
+  })();
+
   return (
-    <tr style={{ borderBottom: `1px solid ${PMS.border}` }}>
+    <tr style={{ borderBottom: `1px solid ${PMS.border}`, opacity: skipped ? 0.55 : 1 }}>
       <td style={{ padding: "8px 12px", color: PMS.inkMuted, fontFamily: "ui-monospace, Menlo, monospace", fontSize: 11 }}>{guest.confNo}</td>
       <td style={{ padding: "8px 12px", color: PMS.ink, fontWeight: 500 }}>
         {guest.name}
@@ -514,64 +595,160 @@ function GuestRow({ guest, mode, file, reviewState, faceIdState, bioId, error, o
       </td>
       <td style={{ padding: "8px 12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {faceCell}
-          {file && (
-            <div style={{ minWidth: 0, fontSize: 11, color: PMS.inkSubtle, fontFamily: "ui-monospace, Menlo, monospace", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 180 }}>
+          {photoCell}
+          {file && !skipped && (
+            <div style={{ minWidth: 0, fontSize: 11, color: PMS.inkSubtle, fontFamily: "ui-monospace, Menlo, monospace", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 160 }}>
               {file.file}
-            </div>
-          )}
-          {mode === "reviewing" && reviewState === "ambiguous" && (
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 6px", borderRadius: 3, background: PMS.warnSoft, color: PMS.warn, fontSize: 11 }}>
-              <Icon name="chevronDown" size={11}/> 2 matches
             </div>
           )}
         </div>
       </td>
       <td style={{ padding: "8px 12px" }}>
-        <StatusCell mode={mode} faceIdState={faceIdState} reviewState={reviewState} bioId={bioId} error={error}/>
+        <RegistrationStatusCell mode={mode} regStatus={regStatus} reviewState={reviewState} bioId={bioId} error={error} skipped={skipped}/>
       </td>
       <td style={{ padding: "8px 12px", textAlign: "right" }}>
-        {mode === "reviewing" && reviewState === "ambiguous" && <Btn size="sm" variant="ghost" icon="check">Pick this</Btn>}
-        {mode === "reviewing" && reviewState === "no-photo" && <Btn size="sm" variant="ghost" icon="plus">Gán ảnh</Btn>}
-        {mode === "resolved" && faceIdState === "failed" && <Btn size="sm" variant="ghost" icon="refresh" onClick={onRetry}>Re-try</Btn>}
-        {(mode === "default" || (mode === "resolved" && faceIdState === "registered") || (mode === "reviewing" && reviewState === "matched")) && (
-          <Icon name="chevronRight" size={14} stroke={PMS.inkSubtle}/>
+        {menuItems.length > 0 && (
+          <DropdownMenu items={menuItems}>
+            <button style={{ background: "transparent", border: `1px solid ${PMS.border}`, borderRadius: 4, padding: "3px 5px", color: PMS.inkMuted, cursor: "pointer", display: "inline-flex" }}>
+              <Icon name="more" size={14}/>
+            </button>
+          </DropdownMenu>
         )}
       </td>
     </tr>
   );
 }
-window.StatsBanner = StatsBanner;
-window.StatusCell = StatusCell;
 window.GuestRow = GuestRow;
 </script>
 
 <script type="text/babel">
-// ===== Shared content of the Face ID Registration tab =====
-// Renders the SAME list across default / reviewing / resolved modes (only chrome above + action buttons change).
-function FaceIdTabContent({ mode, onAction, batchVersion }) {
+// ===== "Cần xử lý" section — combines unmapped files + needs-review (ambiguous) =====
+function AttentionSection({ unmappedFiles, ambiguousItems, guests, onAction }) {
+  const [collapsed, setCollapsed] = React.useState(false);
+  const total = unmappedFiles.length + ambiguousItems.length;
+  if (total === 0) return null;
+
+  const guestById = id => guests.find(g => g.profileId === id);
+
+  return (
+    <div style={{ background: PMS.surface, border: `1px solid ${PMS.warnSoft === "#FBEFE0" ? "#EBC79A" : PMS.warnSoft}`, borderRadius: 6, overflow: "hidden" }}>
+      <div onClick={() => setCollapsed(c => !c)} style={{ padding: "10px 14px", background: PMS.warnSoft, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", borderBottom: collapsed ? "none" : `1px solid #EBC79A` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Icon name="warn" size={16} stroke={PMS.warn}/>
+          <div style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>Photos cần xử lý ({total})</div>
+          <div style={{ fontSize: 11, color: PMS.inkMuted }}>
+            {ambiguousItems.length > 0 && <>⚠ {ambiguousItems.length} needs review</>}
+            {ambiguousItems.length > 0 && unmappedFiles.length > 0 && " · "}
+            {unmappedFiles.length > 0 && <>📄 {unmappedFiles.length} unmapped files</>}
+          </div>
+        </div>
+        <Icon name={collapsed ? "chevronRight" : "chevronDown"} size={14} stroke={PMS.inkMuted}/>
+      </div>
+
+      {!collapsed && (
+        <div>
+          {/* Needs review (ambiguous) — file matches ≥2 guests */}
+          {ambiguousItems.map(f => {
+            const candidateGuests = (f.match || []).map(guestById).filter(Boolean);
+            return (
+              <div key={`amb-${f.file}`} style={{ padding: "10px 14px", borderBottom: `1px solid ${PMS.border}`, display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <FacePlaceholder size={40} name={f.file.replace(/\.[a-z]+$/i, "")}/>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <div style={{ fontWeight: 500, color: PMS.ink, fontSize: 13 }}>{f.file}</div>
+                    <StatusPill tone="warn">⚠ Needs review</StatusPill>
+                    <span style={{ fontSize: 11, color: PMS.inkSubtle }}>{f.size}</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: PMS.inkMuted, marginTop: 4 }}>
+                    Tên file <code style={{ background: PMS.bg, padding: "0 4px", borderRadius: 2 }}>{f.normalized}</code> khớp với {candidateGuests.length} guests cùng tên — chọn đúng guest:
+                  </div>
+                  <div style={{ marginTop: 6, display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {candidateGuests.map(g => (
+                      <Btn key={g.profileId} size="sm" icon="check" onClick={() => onAction && onAction("pickCandidate", { file: f, guest: g })}>
+                        {g.name} · R{g.room}
+                      </Btn>
+                    ))}
+                    <Btn size="sm" variant="ghost" icon="skip" onClick={() => onAction && onAction("skipFile", { file: f })}>Skip file</Btn>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Unmapped files */}
+          {unmappedFiles.map(f => (
+            <div key={`unm-${f.file}`} style={{ padding: "10px 14px", borderBottom: `1px solid ${PMS.border}`, display: "flex", gap: 12, alignItems: "flex-start" }}>
+              <FacePlaceholder size={40} name={f.file.replace(/\.[a-z]+$/i, "")}/>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <div style={{ fontWeight: 500, color: PMS.ink, fontSize: 13 }}>{f.file}</div>
+                  <StatusPill tone="danger" dot={false}>◯ Unmapped</StatusPill>
+                  <span style={{ fontSize: 11, color: PMS.inkSubtle }}>{f.size}</span>
+                </div>
+                <div style={{ fontSize: 11, color: PMS.inkMuted, marginTop: 4 }}>
+                  Tên file <code style={{ background: PMS.bg, padding: "0 4px", borderRadius: 2 }}>{f.normalized}</code> không match guest nào trong roster.
+                </div>
+                <div style={{ marginTop: 6, display: "flex", gap: 6 }}>
+                  <DropdownMenu align="left" items={[
+                    { header: "Chọn guest để gán ảnh" },
+                    ...guests.slice(0, 6).map(g => ({
+                      label: `${g.name} · R${g.room} · ${g.profileId}`,
+                      icon: "user",
+                      onClick: () => onAction && onAction("assignFile", { file: f, guest: g }),
+                    })),
+                    { divider: true },
+                    { label: "Tìm guest khác…", icon: "search", onClick: () => onAction && onAction("searchGuest", { file: f }) },
+                  ]}>
+                    <Btn size="sm" icon="user">Gán cho guest ▾</Btn>
+                  </DropdownMenu>
+                  <Btn size="sm" variant="ghost" icon="skip" onClick={() => onAction && onAction("skipFile", { file: f })}>Skip</Btn>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+window.AttentionSection = AttentionSection;
+</script>
+
+<script type="text/babel">
+// ===== Shared content: Face ID Registration tab body =====
+function FaceIdTabContent({ mode, onAction, batchVersion, externalSkipped }) {
   const data = window.PROTO_DATA;
   const [search, setSearch] = React.useState("");
+  const [localSkipped, setLocalSkipped] = React.useState(() => new Set());
 
-  // Build per-guest view object (file + reviewState + faceIdState + bioId/error)
+  // Toggle skip via row action
+  const setSkip = (profileId, skipped) => {
+    setLocalSkipped(prev => {
+      const next = new Set(prev);
+      if (skipped) next.add(profileId); else next.delete(profileId);
+      return next;
+    });
+  };
+
+  // Build per-row view
   const rows = React.useMemo(() => {
     return data.guests.map(g => {
-      // file association for this guest in current batch
       const matchedFile = data.pickedFiles.find(f => f.match === g.profileId && f.status === "matched");
       const ambigFile = data.pickedFiles.find(f => f.status === "ambiguous" && Array.isArray(f.match) && f.match.includes(g.profileId));
       const file = matchedFile || ambigFile || null;
       const reviewState = matchedFile ? "matched" : ambigFile ? "ambiguous" : "no-photo";
 
-      let faceIdState = "none";
-      let bioId, error;
+      // Persistent registration status — depends on mode
+      let regStatus = "unregistered", bioId, error;
       if (mode === "resolved") {
         const o = data.outcomes[g.profileId];
         if (o) {
-          faceIdState = o.status === "ok" ? "registered" : "failed";
+          regStatus = o.status; // "registered" | "failed" | "photo-uploaded"
           bioId = o.bioId; error = o.error;
         }
       }
-      return { guest: g, file, reviewState, faceIdState, bioId, error };
+      // In default + reviewing, regStatus stays unregistered for everyone
+      return { guest: g, file, reviewState, regStatus, bioId, error };
     });
   }, [mode]);
 
@@ -582,31 +759,34 @@ function FaceIdTabContent({ mode, onAction, batchVersion }) {
   );
 
   const unmappedFiles = data.pickedFiles.filter(f => f.status === "unmapped");
+  const ambiguousFiles = data.pickedFiles.filter(f => f.status === "ambiguous");
 
-  // Persistent stats (always reflect Face ID state across the group)
+  // Persistent stats
   const persistentStats = {
-    notRegistered: rows.filter(r => r.faceIdState === "none").length,
-    registered: rows.filter(r => r.faceIdState === "registered").length,
-    failed: rows.filter(r => r.faceIdState === "failed").length,
+    unregistered: rows.filter(r => r.regStatus === "unregistered").length,
+    photoUploaded: rows.filter(r => r.regStatus === "photo-uploaded").length,
+    registered: rows.filter(r => r.regStatus === "registered").length,
+    failed: rows.filter(r => r.regStatus === "failed").length,
   };
   const reviewCounts = {
-    matched: rows.filter(r => r.reviewState === "matched").length,
+    matched: rows.filter(r => r.reviewState === "matched" && !localSkipped.has(r.guest.profileId)).length,
     ambiguous: rows.filter(r => r.reviewState === "ambiguous").length,
     noPhoto: rows.filter(r => r.reviewState === "no-photo").length,
   };
   const ready = reviewCounts.matched;
 
-  // ----- Stats banner: 4 stats, same labels across all modes -----
+  // ===== Stats banner (5 stats: Total / Unregistered / Photo Uploaded / Registered / Failed) =====
   const banner = (
     <StatsBanner stats={[
-      { label: "Total guests",  value: data.guests.length, tone: "neutral" },
-      { label: "Chưa đăng ký",  value: persistentStats.notRegistered, tone: persistentStats.notRegistered > 0 ? "warn" : "neutral" },
-      { label: "Đã đăng ký",    value: persistentStats.registered, tone: persistentStats.registered > 0 ? "ok" : "neutral" },
-      { label: "Failed",        value: persistentStats.failed, tone: persistentStats.failed > 0 ? "danger" : "neutral" },
+      { label: "Total guests",     value: data.guests.length },
+      { label: "Unregistered",     value: persistentStats.unregistered, tone: persistentStats.unregistered > 0 ? "warn" : "neutral" },
+      { label: "Photo Uploaded",   value: persistentStats.photoUploaded, tone: persistentStats.photoUploaded > 0 ? "brand" : "neutral" },
+      { label: "Registered",       value: persistentStats.registered, tone: persistentStats.registered > 0 ? "ok" : "neutral" },
+      { label: "Failed",           value: persistentStats.failed, tone: persistentStats.failed > 0 ? "danger" : "neutral" },
     ]}/>
   );
 
-  // ----- Top action area changes by mode -----
+  // ===== Top action area =====
   let topActions;
   if (mode === "default") {
     topActions = (
@@ -616,9 +796,7 @@ function FaceIdTabContent({ mode, onAction, batchVersion }) {
         </div>
         <div style={{ display: "flex", gap: 6 }}>
           <Btn icon="plus">+ Map single guest</Btn>
-          <Btn variant="primary" icon="upload" onClick={() => onAction && onAction("openUpload")}>
-            Đăng ký Face ID hàng loạt
-          </Btn>
+          <Btn variant="primary" icon="upload" onClick={() => onAction && onAction("openUpload")}>Đăng ký Face ID hàng loạt</Btn>
         </div>
       </div>
     );
@@ -628,10 +806,10 @@ function FaceIdTabContent({ mode, onAction, batchVersion }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div style={{ fontSize: 12, color: PMS.ink }}>
             <strong>⚠ Đang review batch #{batchVersion || 1}</strong> · 20 files → {data.guests.length} guests ·{" "}
-            <span style={{ color: PMS.ok }}>✓ Mapped {reviewCounts.matched}</span> ·{" "}
-            <span style={{ color: PMS.warn }}>⚠ Needs review {reviewCounts.ambiguous}</span> ·{" "}
-            <span style={{ color: PMS.inkMuted }}>◯ No photo {reviewCounts.noPhoto}</span> ·{" "}
-            <span style={{ color: PMS.danger }}>📄 Unmapped files {unmappedFiles.length}</span>
+            <span style={{ color: PMS.ok }}>✓ {reviewCounts.matched} mapped</span> ·{" "}
+            <span style={{ color: PMS.warn }}>⚠ {reviewCounts.ambiguous} needs review</span> ·{" "}
+            <span style={{ color: PMS.inkMuted }}>◯ {reviewCounts.noPhoto} no photo</span> ·{" "}
+            <span style={{ color: PMS.danger }}>📄 {unmappedFiles.length} unmapped</span>
           </div>
           <div style={{ display: "flex", gap: 6 }}>
             <Btn size="sm" icon="upload" onClick={() => onAction && onAction("uploadMore")}>Upload more</Btn>
@@ -652,90 +830,80 @@ function FaceIdTabContent({ mode, onAction, batchVersion }) {
         </div>
         <div style={{ display: "flex", gap: 6 }}>
           <Btn icon="upload" onClick={() => onAction && onAction("openUpload")}>Upload thêm</Btn>
-          {persistentStats.failed > 0 && <Btn variant="primary" icon="refresh">↻ Re-run failed</Btn>}
+          {persistentStats.failed > 0 && <Btn variant="primary" icon="refresh" onClick={() => onAction && onAction("rerunFailed")}>↻ Re-run failed</Btn>}
         </div>
       </div>
     );
   }
+
+  // Row action handler wrapper
+  const handleRowAction = (action, guest) => {
+    if (action === "skip") {
+      setSkip(guest.profileId, true);
+      onAction && onAction("rowSkipped", guest);
+      return;
+    }
+    if (action === "unskip") {
+      setSkip(guest.profileId, false);
+      onAction && onAction("rowUnskipped", guest);
+      return;
+    }
+    onAction && onAction(action, guest);
+  };
 
   return (
     <>
       {banner}
       <div style={{ marginTop: 12 }}>{topActions}</div>
 
+      {/* Cần xử lý — placed ABOVE the list, right under banner/actions */}
+      {mode === "reviewing" && (unmappedFiles.length + ambiguousFiles.length > 0) && (
+        <div style={{ marginTop: 12 }}>
+          <AttentionSection
+            unmappedFiles={unmappedFiles}
+            ambiguousItems={ambiguousFiles}
+            guests={data.guests}
+            onAction={(a, payload) => onAction && onAction(a, payload)}
+          />
+        </div>
+      )}
+
       {/* Search */}
       <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, padding: "8px 10px" }}>
-        <div style={{ fontSize: 12, color: PMS.inkMuted }}>
-          Hiển thị {visible.length} / {rows.length} guests
-        </div>
+        <div style={{ fontSize: 12, color: PMS.inkMuted }}>Hiển thị {visible.length} / {rows.length} guests</div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 10px", borderRadius: 5, border: `1px solid ${PMS.border}`, fontSize: 12, color: PMS.inkSubtle, minWidth: 240 }}>
           <Icon name="search" size={13}/>
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm theo conf. no hoặc tên…" style={{ border: "none", outline: "none", background: "transparent", fontSize: 12, color: PMS.ink, flex: 1 }}/>
         </div>
       </div>
 
-      {/* The list — same component across all 3 modes */}
-      <div style={{ marginTop: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, overflow: "hidden" }}>
-        <div style={{ maxHeight: mode === "reviewing" ? 360 : 460, overflow: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-            <thead>
-              <tr style={{ background: PMS.surfaceMuted, color: PMS.inkMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.4, position: "sticky", top: 0 }}>
-                {["Conf. No", "Guest", "Face", "Status", ""].map((h, i) =>
-                  <th key={i} style={{ textAlign: "left", padding: "9px 12px", fontWeight: 500, borderBottom: `1px solid ${PMS.border}` }}>{h}</th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {visible.map(r => (
-                <GuestRow
-                  key={r.guest.confNo}
-                  guest={r.guest}
-                  mode={mode}
-                  file={mode === "default" ? null : r.file}
-                  reviewState={mode === "reviewing" ? r.reviewState : undefined}
-                  faceIdState={r.faceIdState}
-                  bioId={r.bioId}
-                  error={r.error}
-                  onRetry={() => onAction && onAction("retry", r.guest)}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {/* Main list */}
+      <div style={{ marginTop: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, overflow: "visible" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <thead>
+            <tr style={{ background: PMS.surfaceMuted, color: PMS.inkMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.4 }}>
+              {["Conf. No", "Guest", "Photo", "Registration Status", ""].map((h, i) =>
+                <th key={i} style={{ textAlign: "left", padding: "9px 12px", fontWeight: 500, borderBottom: `1px solid ${PMS.border}` }}>{h}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {visible.map(r => (
+              <GuestRow
+                key={r.guest.confNo}
+                guest={r.guest}
+                mode={mode}
+                file={mode === "default" ? null : r.file}
+                reviewState={mode === "reviewing" ? r.reviewState : undefined}
+                regStatus={r.regStatus}
+                bioId={r.bioId}
+                error={r.error}
+                skipped={localSkipped.has(r.guest.profileId)}
+                onAction={handleRowAction}
+              />
+            ))}
+          </tbody>
+        </table>
       </div>
-
-      {/* Unmapped files panel (reviewing only) */}
-      {mode === "reviewing" && unmappedFiles.length > 0 && (
-        <div style={{ marginTop: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, overflow: "hidden" }}>
-          <div style={{ padding: "10px 14px", borderBottom: `1px solid ${PMS.border}`, background: PMS.surfaceMuted }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>▾ Unmapped files ({unmappedFiles.length})</div>
-            <div style={{ fontSize: 11, color: PMS.inkMuted, marginTop: 1 }}>File không match guest nào — gán thủ công hoặc skip</div>
-          </div>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-            <tbody>
-              {unmappedFiles.map(f => (
-                <tr key={f.file} style={{ borderBottom: `1px solid ${PMS.border}` }}>
-                  <td style={{ padding: "8px 12px", width: 48 }}>
-                    <FacePlaceholder size={32} name={f.file.replace(/\.[a-z]+$/i, "")}/>
-                  </td>
-                  <td style={{ padding: "8px 12px" }}>
-                    <div style={{ fontWeight: 500, color: PMS.ink, fontSize: 12 }}>{f.file}</div>
-                    <div style={{ fontSize: 11, color: PMS.inkSubtle }}>
-                      {f.size} · normalized: <code style={{ background: PMS.bg, padding: "0 3px", borderRadius: 2 }}>{f.normalized}</code>
-                    </div>
-                  </td>
-                  <td style={{ padding: "8px 12px", textAlign: "right" }}>
-                    <div style={{ display: "inline-flex", gap: 6 }}>
-                      <Btn size="sm" variant="ghost" icon="user">Gán cho guest ▾</Btn>
-                      <Btn size="sm" variant="ghost" icon="skip">Skip</Btn>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
     </>
   );
 }
@@ -743,10 +911,9 @@ window.FaceIdTabContent = FaceIdTabContent;
 </script>
 
 <script type="text/babel">
-// ===== Upload Modal — overlays on top of Default state =====
-// Drop zone for image files (multi-select). Replaces v1 ZIP upload modal.
+// ===== Upload Modal =====
 function UploadModal({ onClose, onDone }) {
-  const [stage, setStage] = React.useState("idle"); // idle | uploading | matching | done
+  const [stage, setStage] = React.useState("idle");
   const [progress, setProgress] = React.useState(0);
   const [consent, setConsent] = React.useState(false);
 
@@ -792,16 +959,13 @@ function UploadModal({ onClose, onDone }) {
         <div style={{ padding: 18 }}>
           {stage === "idle" && (
             <>
-              <div onClick={() => consent && setStage("uploading")} style={{
-                border: `2px dashed ${consent ? PMS.borderStrong : PMS.border}`, borderRadius: 8, padding: "32px 20px",
-                textAlign: "center", background: PMS.surfaceMuted, cursor: consent ? "pointer" : "not-allowed", opacity: consent ? 1 : 0.55,
-              }}>
+              <div onClick={() => consent && setStage("uploading")} style={{ border: `2px dashed ${consent ? PMS.borderStrong : PMS.border}`, borderRadius: 8, padding: "32px 20px", textAlign: "center", background: PMS.surfaceMuted, cursor: consent ? "pointer" : "not-allowed", opacity: consent ? 1 : 0.55 }}>
                 <div style={{ display: "inline-grid", placeItems: "center", width: 52, height: 52, borderRadius: 12, background: PMS.brandSoft, color: PMS.brand, marginBottom: 10 }}>
                   <Icon name="upload" size={26}/>
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: PMS.ink }}>Kéo thả ảnh JPG/PNG/JPEG vào đây, hoặc click để chọn</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: PMS.ink }}>Kéo thả ảnh JPG/PNG/JPEG, hoặc click để chọn</div>
                 <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 4, lineHeight: 1.6 }}>
-                  Multi-select · đặt tên file = họ tên khách (vd <code style={{ background: PMS.bg, padding: "1px 5px", borderRadius: 3 }}>nguyen thi van.jpg</code>)<br/>
+                  Multi-select · tên file = họ tên khách (vd <code style={{ background: PMS.bg, padding: "1px 5px", borderRadius: 3 }}>nguyen thi van.jpg</code>)<br/>
                   Tối đa 200 ảnh · Mỗi ảnh ≤ 5 MB · Tổng ≤ 500 MB
                 </div>
               </div>
@@ -809,9 +973,7 @@ function UploadModal({ onClose, onDone }) {
                 <div style={{ color: PMS.warn, marginTop: 1 }}><Icon name="lock" size={16}/></div>
                 <label style={{ fontSize: 12, color: PMS.ink, lineHeight: 1.55, flex: 1, cursor: "pointer", display: "flex", gap: 8, alignItems: "flex-start" }}>
                   <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} style={{ marginTop: 2 }}/>
-                  <span>
-                    <strong>PDPA consent.</strong> Khách đã đồng ý cho khách sạn lưu ảnh khuôn mặt phục vụ check-in. Mọi thao tác đều được ghi audit log. (NĐ 13/2023/NĐ-CP)
-                  </span>
+                  <span><strong>PDPA consent.</strong> Khách đã đồng ý cho khách sạn lưu ảnh khuôn mặt phục vụ check-in. Mọi thao tác được ghi audit log. (NĐ 13/2023/NĐ-CP)</span>
                 </label>
               </div>
               <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end", gap: 6 }}>
@@ -820,13 +982,10 @@ function UploadModal({ onClose, onDone }) {
               </div>
             </>
           )}
-
           {(stage === "uploading" || stage === "matching") && (
             <>
               <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", border: `1px solid ${PMS.border}`, borderRadius: 6 }}>
-                <div style={{ width: 38, height: 38, borderRadius: 6, background: PMS.brandSoft, color: PMS.brand, display: "grid", placeItems: "center" }}>
-                  <Icon name="upload" size={20}/>
-                </div>
+                <div style={{ width: 38, height: 38, borderRadius: 6, background: PMS.brandSoft, color: PMS.brand, display: "grid", placeItems: "center" }}><Icon name="upload" size={20}/></div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>20 ảnh · 8.4 MB</div>
                   <div style={{ fontSize: 11, color: PMS.inkMuted }}>
@@ -838,27 +997,15 @@ function UploadModal({ onClose, onDone }) {
               <div style={{ height: 6, marginTop: 14, background: PMS.bg, borderRadius: 999, overflow: "hidden" }}>
                 <div style={{ height: "100%", width: stage === "uploading" ? `${progress}%` : "100%", background: stage === "uploading" ? PMS.brand : PMS.accent, transition: "width 0.2s" }}/>
               </div>
-              <div style={{ marginTop: 18, fontSize: 12, color: PMS.inkMuted, lineHeight: 1.7 }}>
-                {stage === "uploading"
-                  ? <>↑ Đang tải 20 file ảnh…</>
-                  : <>
-                      ✓ Đã upload: 20 ảnh hợp lệ (JPG/PNG/JPEG, đều ≤ 5 MB)<br/>
-                      ⏳ Đang chuẩn hoá tên file (bỏ số thứ tự, bỏ dấu, lowercase…)<br/>
-                      ⏳ Đang ghép với 18 guest trong rooming list…
-                    </>}
-              </div>
             </>
           )}
-
           {stage === "done" && (
             <>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 32, height: 32, borderRadius: "50%", background: PMS.okSoft, color: PMS.ok, display: "grid", placeItems: "center" }}>
-                  <Icon name="check" size={18}/>
-                </div>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: PMS.okSoft, color: PMS.ok, display: "grid", placeItems: "center" }}><Icon name="check" size={18}/></div>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 600 }}>Đã upload 20 ảnh</div>
-                  <div style={{ fontSize: 12, color: PMS.inkMuted }}>16 mapped · 1 needs review · 3 unmapped files · 1 guest chưa có ảnh</div>
+                  <div style={{ fontSize: 12, color: PMS.inkMuted }}>16 mapped · 1 needs review · 3 unmapped · 1 guest chưa có ảnh</div>
                 </div>
               </div>
               <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end", gap: 6 }}>
@@ -876,13 +1023,50 @@ window.UploadModal = UploadModal;
 </script>
 
 <script type="text/babel">
-// ===== SCREEN 01 — Default state (tab Face ID Registration, all guests Chưa đăng ký) =====
+// ===== Screen-level wrapper that manages toast for action feedback =====
+function useToast() {
+  const [toast, setToast] = React.useState(null);
+  const show = (message, tone = "ok") => setToast({ message, tone });
+  const close = () => setToast(null);
+  return { toast, show, close };
+}
+
+// Common action handler producing toast feedback for prototype actions
+function describeAction(action, payload) {
+  if (action === "rowSkipped") return { msg: `Skipped guest ${payload.name}`, tone: "warn" };
+  if (action === "rowUnskipped") return { msg: `Restored ${payload.name}`, tone: "ok" };
+  if (action === "remap") return { msg: `Re-map photo cho ${payload.name} — picker mở…`, tone: "brand" };
+  if (action === "removePhoto") return { msg: `Đã gỡ photo của ${payload.name} khỏi batch`, tone: "warn" };
+  if (action === "pickAmbiguous") return { msg: `Đã chọn ${payload.name} cho ảnh — guest còn lại sẽ về No photo`, tone: "ok" };
+  if (action === "openCandidates") return { msg: `Mở picker chọn guest cho ảnh ambiguous`, tone: "brand" };
+  if (action === "assignFromPool") return { msg: `Mở picker chọn ảnh từ pool cho ${payload.name}`, tone: "brand" };
+  if (action === "uploadSingle") return { msg: `Mở file picker để upload ảnh cho ${payload.name}`, tone: "brand" };
+  if (action === "viewProfile") return { msg: `Mở Profile Edit của ${payload.name}`, tone: "brand" };
+  if (action === "viewBio") return { msg: `bioId của ${payload.name}: ${window.PROTO_DATA.outcomes[payload.profileId].bioId}`, tone: "ok" };
+  if (action === "reregister") return { msg: `Re-register sẽ overwrite bioId hiện tại của ${payload.name}`, tone: "warn" };
+  if (action === "revoke") return { msg: `Revoke bioId của ${payload.name} — cần confirm dialog`, tone: "danger" };
+  if (action === "retry") return { msg: `Re-try ${payload.name} với photo mới — mở picker…`, tone: "brand" };
+  if (action === "rerun") return { msg: `Re-run API cho ${payload.name} với photo hiện tại`, tone: "brand" };
+  if (action === "rerunFailed") return { msg: `Re-running all 2 failed guests…`, tone: "brand" };
+  if (action === "triggerRegister") return { msg: `Trigger Face ID API cho ${payload.name}`, tone: "brand" };
+  if (action === "pickCandidate") return { msg: `Đã gán ảnh ${payload.file.file} cho ${payload.guest.name} (R${payload.guest.room})`, tone: "ok" };
+  if (action === "assignFile") return { msg: `Đã gán ảnh ${payload.file.file} cho ${payload.guest.name}`, tone: "ok" };
+  if (action === "skipFile") return { msg: `Đã skip ảnh ${payload.file.file}`, tone: "warn" };
+  if (action === "searchGuest") return { msg: `Mở picker search guest cho ảnh ${payload.file.file}`, tone: "brand" };
+  return null;
+}
+
+// ===== SCREEN 01 — Default =====
 function ScreenDefault() {
+  const { toast, show, close } = useToast();
+  const handle = (action, payload) => {
+    if (action === "openUpload") { window.GO && window.GO(2); return; }
+    const d = describeAction(action, payload);
+    if (d) show(d.msg, d.tone);
+  };
   return (
-    <ItineraryShell activeTab="faceid" onTabChange={(t) => t === "activity" && window.GO && window.GO(6)}>
-      <FaceIdTabContent mode="default" onAction={(action) => {
-        if (action === "openUpload") window.GO && window.GO(2);
-      }}/>
+    <ItineraryShell activeTab="faceid" onTabChange={(t) => t === "activity" && window.GO && window.GO(6)} toast={toast} onToastClose={close}>
+      <FaceIdTabContent mode="default" onAction={handle}/>
     </ItineraryShell>
   );
 }
@@ -897,21 +1081,25 @@ function ScreenUploadModal() {
   );
 }
 
-// ===== SCREEN 03 — Reviewing state (SAME list as Default, content adapts via mode) =====
+// ===== SCREEN 03 — Reviewing =====
 function ScreenReviewing() {
-  const headerBadge = <StatusPill tone="warn"><Icon name="warn" size={11}/> Đang review batch</StatusPill>;
+  const { toast, show, close } = useToast();
+  const statusBadge = <StatusPill tone="warn"><Icon name="warn" size={11}/> Reviewing batch</StatusPill>;
+  const handle = (action, payload) => {
+    if (action === "confirm") { window.GO && window.GO(4); return; }
+    if (action === "cancel") { window.GO && window.GO(1); return; }
+    if (action === "uploadMore" || action === "replace") { window.GO && window.GO(2); return; }
+    const d = describeAction(action, payload);
+    if (d) show(d.msg, d.tone);
+  };
   return (
-    <ItineraryShell activeTab="faceid" headerBadge={headerBadge}>
-      <FaceIdTabContent mode="reviewing" batchVersion={1} onAction={(action) => {
-        if (action === "confirm") window.GO && window.GO(4);
-        else if (action === "cancel") window.GO && window.GO(1);
-        else if (action === "uploadMore" || action === "replace") window.GO && window.GO(2);
-      }}/>
+    <ItineraryShell activeTab="faceid" statusBadge={statusBadge} toast={toast} onToastClose={close}>
+      <FaceIdTabContent mode="reviewing" batchVersion={1} onAction={handle}/>
     </ItineraryShell>
   );
 }
 
-// ===== SCREEN 04 — Processing Modal overlaid on Reviewing =====
+// ===== SCREEN 04 — Processing modal =====
 function ScreenProcessing() {
   const data = window.PROTO_DATA;
   const queue = React.useMemo(() => {
@@ -933,23 +1121,23 @@ function ScreenProcessing() {
     const t = setTimeout(() => {
       setStatuses(s => { const ns = [...s]; ns[idx] = queue[idx].result; return ns; });
       setIdx(i => i + 1);
-    }, 280 + Math.random() * 200);
+    }, 240 + Math.random() * 180);
     return () => clearTimeout(t);
   }, [idx, done]);
 
   const counts = {
-    done: statuses.filter(s => s === "ok").length,
-    failed: statuses.filter(s => s === "fail").length,
+    done: statuses.filter(s => s === "registered").length,
+    photoUploaded: statuses.filter(s => s === "photo-uploaded").length,
+    failed: statuses.filter(s => s === "failed").length,
     processing: statuses.filter(s => s === "processing").length,
     pending: statuses.filter(s => s === "pending").length,
   };
-  const pct = Math.round((counts.done + counts.failed) / queue.length * 100);
-
-  const headerBadge = <StatusPill tone="brand"><Icon name="scan" size={11}/> Đang xử lý</StatusPill>;
+  const completed = counts.done + counts.failed + counts.photoUploaded;
+  const pct = Math.round(completed / queue.length * 100);
+  const statusBadge = <StatusPill tone="brand"><Icon name="scan" size={11}/> Processing</StatusPill>;
 
   return (
-    <ItineraryShell activeTab="faceid" headerBadge={headerBadge}>
-      {/* Reviewing state dimmed behind */}
+    <ItineraryShell activeTab="faceid" statusBadge={statusBadge}>
       <div style={{ opacity: 0.35, pointerEvents: "none" }}>
         <FaceIdTabContent mode="reviewing"/>
       </div>
@@ -958,19 +1146,16 @@ function ScreenProcessing() {
         <div style={{ width: 640, maxHeight: "82%", background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 8, boxShadow: "0 24px 60px rgba(17,32,46,0.18)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
           <div style={{ padding: "14px 18px", borderBottom: `1px solid ${PMS.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: PMS.ink }}>
-                {done ? "Hoàn tất batch" : "Đang xử lý Face ID"}
-              </div>
-              <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 2 }}>
-                Bước 3/3 · {counts.done + counts.failed} / {queue.length} processed · concurrency = 5
-              </div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: PMS.ink }}>{done ? "Hoàn tất batch" : "Đang xử lý Face ID"}</div>
+              <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 2 }}>Bước 3/3 · {completed} / {queue.length} processed · concurrency = 5</div>
             </div>
             {!done && <Btn size="sm" variant="ghost" icon="x">Cancel</Btn>}
           </div>
           <div style={{ padding: "12px 18px", borderBottom: `1px solid ${PMS.border}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: PMS.inkMuted, marginBottom: 6 }}>
               <span>
-                <span style={{ color: PMS.ok, fontWeight: 600 }}>{counts.done} success</span> ·{" "}
+                <span style={{ color: PMS.ok, fontWeight: 600 }}>{counts.done} registered</span> ·{" "}
+                <span style={{ color: PMS.brand, fontWeight: 600 }}>{counts.photoUploaded} photo-uploaded</span> ·{" "}
                 <span style={{ color: PMS.danger, fontWeight: 600 }}>{counts.failed} failed</span> ·{" "}
                 <span>{counts.processing} in flight</span> ·{" "}
                 <span style={{ color: PMS.inkSubtle }}>{counts.pending} queued</span>
@@ -979,6 +1164,7 @@ function ScreenProcessing() {
             </div>
             <div style={{ height: 8, background: PMS.bg, borderRadius: 999, overflow: "hidden", display: "flex" }}>
               <div style={{ width: `${counts.done / queue.length * 100}%`, background: PMS.ok, transition: "width 0.3s" }}/>
+              <div style={{ width: `${counts.photoUploaded / queue.length * 100}%`, background: PMS.brand, transition: "width 0.3s" }}/>
               <div style={{ width: `${counts.failed / queue.length * 100}%`, background: PMS.danger, transition: "width 0.3s" }}/>
             </div>
           </div>
@@ -1008,8 +1194,9 @@ function ScreenProcessing() {
                             calling API…
                           </span>
                         )}
-                        {st === "ok" && <span style={{ color: PMS.ok }}>✓ {q.bioId}</span>}
-                        {st === "fail" && <span style={{ color: PMS.danger }}>✗ {q.error}</span>}
+                        {st === "registered" && <span style={{ color: PMS.ok }}>✓ {q.bioId}</span>}
+                        {st === "photo-uploaded" && <span style={{ color: PMS.brand }}>📷 photo uploaded</span>}
+                        {st === "failed" && <span style={{ color: PMS.danger }}>✗ {q.error}</span>}
                       </td>
                     </tr>
                   );
@@ -1028,61 +1215,55 @@ function ScreenProcessing() {
   );
 }
 
-// ===== SCREEN 05 — Resolved state (SAME list, status column shows registered/failed) =====
+// ===== SCREEN 05 — Resolved =====
 function ScreenResolved() {
   const data = window.PROTO_DATA;
+  const { toast, show, close } = useToast();
   const [bannerDismissed, setBannerDismissed] = React.useState(false);
-  const okCount = Object.values(data.outcomes).filter(o => o.status === "ok").length;
-  const failCount = Object.values(data.outcomes).filter(o => o.status === "fail").length;
+  const okCount = Object.values(data.outcomes).filter(o => o.status === "registered").length;
+  const failCount = Object.values(data.outcomes).filter(o => o.status === "failed").length;
+  const pendingCount = Object.values(data.outcomes).filter(o => o.status === "photo-uploaded").length;
   const failedNames = data.guests
-    .filter(g => data.outcomes[g.profileId] && data.outcomes[g.profileId].status === "fail")
+    .filter(g => data.outcomes[g.profileId] && data.outcomes[g.profileId].status === "failed")
     .map(g => `${g.name} (${data.outcomes[g.profileId].error})`)
     .join(", ");
-  const headerBadge = <StatusPill tone="accent"><Icon name="face" size={11}/> {okCount}/{data.guests.length} sẵn sàng</StatusPill>;
+  const statusBadge = <StatusPill tone="accent"><Icon name="face" size={11}/> {okCount}/{data.guests.length} sẵn sàng</StatusPill>;
+  const handle = (action, payload) => {
+    if (action === "openUpload") { window.GO && window.GO(2); return; }
+    if (action === "retry") { window.GO && window.GO(2); return; }
+    const d = describeAction(action, payload);
+    if (d) show(d.msg, d.tone);
+  };
 
   return (
-    <ItineraryShell activeTab="faceid" onTabChange={(t) => t === "activity" && window.GO && window.GO(6)} headerBadge={headerBadge}>
+    <ItineraryShell activeTab="faceid" onTabChange={(t) => t === "activity" && window.GO && window.GO(6)} statusBadge={statusBadge} toast={toast} onToastClose={close}>
       {!bannerDismissed && (
         <div style={{ background: failCount > 0 ? PMS.warnSoft : PMS.okSoft, border: `1px solid ${failCount > 0 ? "#EBC79A" : "#BFE0CF"}`, borderRadius: 6, padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 12 }}>
-          <div style={{ color: failCount > 0 ? PMS.warn : PMS.ok, marginTop: 1 }}>
-            <Icon name={failCount > 0 ? "warn" : "check"} size={18}/>
-          </div>
+          <div style={{ color: failCount > 0 ? PMS.warn : PMS.ok, marginTop: 1 }}><Icon name={failCount > 0 ? "warn" : "check"} size={18}/></div>
           <div style={{ flex: 1, fontSize: 12, color: PMS.ink, lineHeight: 1.55 }}>
-            <strong>Hoàn tất batch · {okCount} thành công · {failCount} lỗi · 28/12/2025 09:42</strong>
-            {failCount > 0 && <div style={{ marginTop: 4, color: PMS.inkMuted }}>{failCount} guests lỗi: {failedNames}</div>}
+            <strong>Batch complete · {okCount} registered · {pendingCount} photo uploaded · {failCount} failed · 28/12/2025 09:42</strong>
+            {failCount > 0 && <div style={{ marginTop: 4, color: PMS.inkMuted }}>{failCount} failed: {failedNames}</div>}
             <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
-              {failCount > 0 && <Btn size="sm" variant="primary" icon="refresh">Re-run failed</Btn>}
-              <Btn size="sm" icon="history" onClick={() => window.GO && window.GO(6)}>Xem chi tiết trong Activity Logs →</Btn>
+              {failCount > 0 && <Btn size="sm" variant="primary" icon="refresh" onClick={() => show(`Re-running ${failCount} failed guests…`, "brand")}>Re-run failed</Btn>}
+              <Btn size="sm" icon="history" onClick={() => window.GO && window.GO(6)}>View Activity Logs →</Btn>
             </div>
           </div>
           <Btn size="sm" variant="ghost" icon="x" onClick={() => setBannerDismissed(true)}>Dismiss</Btn>
         </div>
       )}
-
-      <FaceIdTabContent mode="resolved" onAction={(action) => {
-        if (action === "openUpload") window.GO && window.GO(2);
-        if (action === "retry") window.GO && window.GO(2);
-      }}/>
-
-      <div style={{ marginTop: 12, fontSize: 11, color: PMS.inkSubtle, lineHeight: 1.7 }}>
-        <Icon name="lock" size={11}/> Time saved ~80 phút so với register từng khách (18 × ~2.5 phút). bioId đã lưu vào Profile.bioId. Audit log đầy đủ tại tab Activity Logs.
-      </div>
+      <FaceIdTabContent mode="resolved" onAction={handle}/>
     </ItineraryShell>
   );
 }
 
-// ===== SCREEN 06 — Activity Logs tab =====
+// ===== SCREEN 06 — Activity Logs =====
 function ScreenActivityLogs() {
   const data = window.PROTO_DATA;
   const [expanded, setExpanded] = React.useState(new Set(["log-005"]));
-  const toggle = (id) => {
-    setExpanded(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
-  };
+  const toggle = (id) => setExpanded(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const typeIcon = {
-    batch: { icon: "scan", color: PMS.brand },
-    manual: { icon: "user", color: PMS.accent },
-    revoke: { icon: "trash", color: PMS.danger },
-    consent: { icon: "lock", color: PMS.warn },
+    batch: { icon: "scan", color: PMS.brand }, manual: { icon: "user", color: PMS.accent },
+    revoke: { icon: "trash", color: PMS.danger }, consent: { icon: "lock", color: PMS.warn },
     open: { icon: "folder", color: PMS.inkMuted },
   };
   const typeLabel = { batch: "Bulk batch", manual: "Manual map", revoke: "Revoke bioID", consent: "PDPA consent", open: "Itinerary opened" };
@@ -1093,9 +1274,7 @@ function ScreenActivityLogs() {
         <div style={{ padding: "10px 14px", borderBottom: `1px solid ${PMS.border}`, background: PMS.surfaceMuted, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>Activity Logs</div>
-            <div style={{ fontSize: 11, color: PMS.inkMuted, marginTop: 1 }}>
-              Audit log đầy đủ theo NĐ 13/2023/NĐ-CP — Điều 26 · {data.activityLogs.length} entries
-            </div>
+            <div style={{ fontSize: 11, color: PMS.inkMuted, marginTop: 1 }}>Audit log đầy đủ theo NĐ 13/2023/NĐ-CP — Điều 26 · {data.activityLogs.length} entries</div>
           </div>
           <Btn size="sm" icon="download2">Export CSV</Btn>
         </div>
@@ -1117,9 +1296,7 @@ function ScreenActivityLogs() {
                     </div>
                     <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 3 }}>{log.detail}</div>
                   </div>
-                  <div style={{ color: PMS.inkSubtle, padding: 4 }}>
-                    <Icon name={isOpen ? "chevronDown" : "chevronRight"} size={14}/>
-                  </div>
+                  <div style={{ color: PMS.inkSubtle, padding: 4 }}><Icon name={isOpen ? "chevronDown" : "chevronRight"} size={14}/></div>
                 </div>
                 {isOpen && log.type === "batch" && (
                   <div style={{ padding: "0 14px 14px 58px", background: PMS.surfaceMuted, borderTop: `1px solid ${PMS.border}` }}>
@@ -1128,7 +1305,7 @@ function ScreenActivityLogs() {
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, background: PMS.surface, border: `1px solid ${PMS.border}` }}>
                         <thead>
                           <tr style={{ background: PMS.surface, color: PMS.inkMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>
-                            {["Conf. No", "Guest", "File", "Result", "bioId / Error"].map((h, i) =>
+                            {["Conf. No", "Guest", "File", "Registration Status", "bioId / Error"].map((h, i) =>
                               <th key={i} style={{ textAlign: "left", padding: "6px 10px", fontWeight: 500, borderBottom: `1px solid ${PMS.border}` }}>{h}</th>)}
                           </tr>
                         </thead>
@@ -1143,27 +1320,18 @@ function ScreenActivityLogs() {
                                 <td style={{ padding: "5px 10px" }}>{g.name}</td>
                                 <td style={{ padding: "5px 10px", color: PMS.inkMuted, fontFamily: "ui-monospace, Menlo, monospace", fontSize: 10 }}>{file ? file.file : "—"}</td>
                                 <td style={{ padding: "5px 10px" }}>
-                                  {o.status === "ok"
-                                    ? <span style={{ color: PMS.ok, fontWeight: 600 }}>✓ OK</span>
-                                    : <span style={{ color: PMS.danger, fontWeight: 600 }}>✗ FAIL</span>}
+                                  {o.status === "registered" && <span style={{ color: PMS.ok, fontWeight: 600 }}>✓ Registered</span>}
+                                  {o.status === "photo-uploaded" && <span style={{ color: PMS.brand, fontWeight: 600 }}>📷 Photo Uploaded</span>}
+                                  {o.status === "failed" && <span style={{ color: PMS.danger, fontWeight: 600 }}>✗ Failed</span>}
                                 </td>
                                 <td style={{ padding: "5px 10px", fontFamily: "ui-monospace, Menlo, monospace", fontSize: 10 }}>
-                                  {o.status === "ok"
-                                    ? <span style={{ color: PMS.ok }}>{o.bioId}</span>
-                                    : <span style={{ color: PMS.danger }}>{o.error}</span>}
+                                  {o.bioId && <span style={{ color: PMS.ok }}>{o.bioId}</span>}
+                                  {o.error && <span style={{ color: PMS.danger }}>{o.error}</span>}
+                                  {!o.bioId && !o.error && <span style={{ color: PMS.inkSubtle }}>—</span>}
                                 </td>
                               </tr>
                             );
                           })}
-                          {data.pickedFiles.filter(f => f.status === "unmapped").map(f => (
-                            <tr key={f.file} style={{ borderBottom: `1px solid ${PMS.border}`, background: PMS.bg }}>
-                              <td style={{ padding: "5px 10px", color: PMS.inkSubtle }}>—</td>
-                              <td style={{ padding: "5px 10px", color: PMS.inkSubtle, fontStyle: "italic" }}>(no match)</td>
-                              <td style={{ padding: "5px 10px", color: PMS.inkMuted, fontFamily: "ui-monospace, Menlo, monospace", fontSize: 10 }}>{f.file}</td>
-                              <td style={{ padding: "5px 10px" }}><span style={{ color: PMS.inkSubtle, fontWeight: 600 }}>SKIP</span></td>
-                              <td style={{ padding: "5px 10px", color: PMS.inkSubtle, fontStyle: "italic" }}>not matched</td>
-                            </tr>
-                          ))}
                         </tbody>
                       </table>
                     </div>
@@ -1199,12 +1367,12 @@ window.ScreenActivityLogs = ScreenActivityLogs;
 const { useState, useEffect, useRef, useLayoutEffect } = React;
 
 const SCREENS = [
-  { id: "s1", label: "01 · Default",          Component: ScreenDefault,       width: 1440, height: 980 },
-  { id: "s2", label: "02 · Upload modal",     Component: ScreenUploadModal,   width: 1440, height: 980 },
-  { id: "s3", label: "03 · Reviewing",        Component: ScreenReviewing,     width: 1440, height: 1000 },
+  { id: "s1", label: "01 · Default",          Component: ScreenDefault,       width: 1440, height: 900 },
+  { id: "s2", label: "02 · Upload modal",     Component: ScreenUploadModal,   width: 1440, height: 900 },
+  { id: "s3", label: "03 · Reviewing",        Component: ScreenReviewing,     width: 1440, height: 1080 },
   { id: "s4", label: "04 · Processing modal", Component: ScreenProcessing,    width: 1440, height: 1000 },
   { id: "s5", label: "05 · Resolved",         Component: ScreenResolved,      width: 1440, height: 1000 },
-  { id: "s6", label: "06 · Activity Logs",    Component: ScreenActivityLogs,  width: 1440, height: 980 },
+  { id: "s6", label: "06 · Activity Logs",    Component: ScreenActivityLogs,  width: 1440, height: 900 },
 ];
 
 function App() {
@@ -1212,9 +1380,7 @@ function App() {
   const frameRef = useRef(null);
   const [scale, setScale] = useState(1);
 
-  useEffect(() => {
-    window.GO = (n) => { if (typeof n === "number" && n >= 1 && n <= SCREENS.length) setStep(n); };
-  }, []);
+  useEffect(() => { window.GO = (n) => { if (typeof n === "number" && n >= 1 && n <= SCREENS.length) setStep(n); }; }, []);
 
   const current = SCREENS[step - 1];
 
@@ -1246,7 +1412,7 @@ function App() {
   return (
     <>
       <div className="nav-bar">
-        <span className="title">v2 · Face ID Registration · single shared list</span>
+        <span className="title">v2.1 · Face ID Registration · actions + 4-state registration</span>
         {SCREENS.map((s, i) => (
           <span key={s.id} className={"step" + (i + 1 === step ? " active" : "")} onClick={() => setStep(i + 1)}>{s.label}</span>
         ))}
