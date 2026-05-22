@@ -763,13 +763,12 @@ function FaceIdTabContent({ mode, onAction, batchVersion, onToast }) {
     onAction && onAction(action, guest);
   };
 
-  // ===== Stats banner (5 stats — per PO feedback) =====
+  // ===== Stats banner (4 stats — per PO feedback round 6) =====
   const unregCount = rows.filter(r => r.regStatus === "unregistered").length;
   const banner = (
     <StatsBanner stats={[
       { label: "Total guests",  value: data.guests.length,        tone: "neutral" },
       { label: "Unregistered",  value: unregCount,                tone: unregCount > 0 ? "warn" : "neutral" },
-      { label: "Photo Mapped",  value: photoCounts.mapped,        tone: photoCounts.mapped > 0 ? "ok" : "neutral" },
       { label: "Registered",    value: regCounts.registered,      tone: regCounts.registered > 0 ? "ok" : "neutral" },
       { label: "Failed",        value: regCounts.failed,          tone: regCounts.failed > 0 ? "danger" : "neutral" },
     ]}/>
@@ -804,7 +803,7 @@ function FaceIdTabContent({ mode, onAction, batchVersion, onToast }) {
           </div>
           <div style={{ display: "flex", gap: 6 }}>
             <Btn size="sm" icon="upload" onClick={() => onAction && onAction("uploadMore")}>Upload more photo</Btn>
-            <Btn size="sm" variant="primary" icon="scan" disabled={ready === 0} onClick={() => onAction && onAction("confirm")}>
+            <Btn size="sm" variant="primary" icon="scan" disabled={ready === 0} onClick={() => onAction && onAction("confirm", { ready })}>
               Confirm {ready} & Register →
             </Btn>
           </div>
@@ -1023,16 +1022,45 @@ function ScreenUploadModal() {
   );
 }
 
+// ===== Small ConfirmModal helper =====
+function ConfirmModal({ title, body, confirmLabel = "Confirm", cancelLabel = "Cancel", danger = false, onConfirm, onCancel }) {
+  return (
+    <div style={{ position: "absolute", inset: 0, background: "rgba(17,32,46,0.42)", display: "grid", placeItems: "center", zIndex: 60 }}>
+      <div style={{ width: 480, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 8, boxShadow: "0 24px 60px rgba(17,32,46,0.18)", overflow: "hidden" }}>
+        <div style={{ padding: "14px 18px", borderBottom: `1px solid ${PMS.border}` }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: PMS.ink }}>{title}</div>
+        </div>
+        <div style={{ padding: "14px 18px", fontSize: 13, color: PMS.ink, lineHeight: 1.55 }}>{body}</div>
+        <div style={{ padding: "10px 18px", background: PMS.surfaceMuted, borderTop: `1px solid ${PMS.border}`, display: "flex", justifyContent: "flex-end", gap: 6 }}>
+          <Btn onClick={onCancel}>{cancelLabel}</Btn>
+          <Btn variant="primary" onClick={onConfirm} style={danger ? { background: PMS.danger, borderColor: PMS.danger } : {}}>{confirmLabel}</Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // SCREEN 03 — Reviewing
 function ScreenReviewing() {
   const { toast, show, close } = useToast();
-  const handle = (action) => {
-    if (action === "confirm") { window.GO && window.GO(4); return; }
+  const [confirmModal, setConfirmModal] = React.useState(null); // null | { ready }
+  const handle = (action, payload) => {
+    if (action === "confirm") { setConfirmModal({ ready: payload && payload.ready || 0 }); return; }
     if (action === "uploadMore") { window.GO && window.GO(2); return; }
   };
   return (
     <ItineraryShell activeTab="faceid" toast={toast} onToastClose={close}>
       <FaceIdTabContent mode="reviewing" batchVersion={1} onAction={handle} onToast={show}/>
+      {confirmModal && (
+        <ConfirmModal
+          title={`Confirm & Register ${confirmModal.ready} photos`}
+          body={<>You are about to register Face ID for <strong>{confirmModal.ready}</strong> guest{confirmModal.ready === 1 ? "" : "s"}. This will send biometric data to the Face ID system and cannot be undone in bulk — each guest must be removed individually if needed.</>}
+          confirmLabel="Confirm"
+          danger={true}
+          onCancel={() => setConfirmModal(null)}
+          onConfirm={() => { setConfirmModal(null); window.GO && window.GO(4); }}
+        />
+      )}
     </ItineraryShell>
   );
 }
@@ -1055,9 +1083,11 @@ function ScreenProcessing() {
   const [idx, setIdx] = React.useState(0);
   const [statuses, setStatuses] = React.useState(() => queue.map(() => "pending"));
   const [done, setDone] = React.useState(false);
+  const [paused, setPaused] = React.useState(false);
+  const [cancelModal, setCancelModal] = React.useState(false);
 
   React.useEffect(() => {
-    if (done) return;
+    if (done || paused) return;
     if (idx >= queue.length) { setDone(true); return; }
     setStatuses(s => { const ns = [...s]; ns[idx] = "processing"; return ns; });
     const t = setTimeout(() => {
@@ -1065,7 +1095,7 @@ function ScreenProcessing() {
       setIdx(i => i + 1);
     }, 240 + Math.random() * 180);
     return () => clearTimeout(t);
-  }, [idx, done]);
+  }, [idx, done, paused]);
 
   const counts = {
     done: statuses.filter(s => s === "registered").length,
@@ -1088,7 +1118,7 @@ function ScreenProcessing() {
               <div style={{ fontSize: 15, fontWeight: 700, color: PMS.ink }}>{done ? "Hoàn tất batch" : "Đang xử lý Face ID"}</div>
               <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 2 }}>Bước 3/3 · {completed} / {queue.length} processed · concurrency = 5</div>
             </div>
-            {!done && <Btn size="sm" variant="ghost" icon="x">Cancel</Btn>}
+            {!done && <Btn size="sm" variant="ghost" icon="x" onClick={() => { setPaused(true); setCancelModal(true); }}>Cancel</Btn>}
           </div>
           <div style={{ padding: "12px 18px", borderBottom: `1px solid ${PMS.border}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: PMS.inkMuted, marginBottom: 6 }}>
@@ -1147,6 +1177,17 @@ function ScreenProcessing() {
           )}
         </div>
       </div>
+      {cancelModal && (
+        <ConfirmModal
+          title="Confirm Cancel Face ID Registration"
+          body="Are you sure you want to cancel the Face ID registration process? Some guests are still being processed. This action cannot be undone."
+          confirmLabel="Confirm"
+          cancelLabel="Cancel"
+          danger={true}
+          onCancel={() => { setCancelModal(false); setPaused(false); }}
+          onConfirm={() => { setCancelModal(false); window.GO && window.GO(3); }}
+        />
+      )}
     </ItineraryShell>
   );
 }
