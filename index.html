@@ -441,9 +441,7 @@ function GuestRow({ guest, mode, file, photoMapping, regStatus, bioId, error, on
     }
     if (mode === "default") {
       return [
-        { header: "Actions" },
         { label: "Upload photo for this guest", icon: "upload", onClick: () => onAction && onAction("uploadSingle", guest) },
-        { label: "View guest profile", icon: "user", onClick: () => onAction && onAction("viewProfile", guest) },
       ];
     }
     if (mode === "reviewing") {
@@ -790,7 +788,6 @@ function FaceIdTabContent({ mode, onAction, batchVersion, onToast }) {
             : <><strong style={{ color: PMS.ink }}>{regCounts.registered} / {data.guests.length}</strong> guests sẵn sàng Face ID check-in</>}
         </div>
         <div style={{ display: "flex", gap: 6 }}>
-          <Btn icon="plus" onClick={() => onToast && onToast("Mở picker chọn single guest để map", "brand")}>+ Map single guest</Btn>
           <Btn variant="primary" icon="upload" onClick={() => onAction && onAction("openUpload")}>Đăng ký Face ID hàng loạt</Btn>
         </div>
       </div>
