@@ -320,7 +320,7 @@ window.DropdownMenu = DropdownMenu; window.Toast = Toast;
 
 <script type="text/babel">
 // ===== Itinerary Shell — 3 tabs (Activity Logs removed) =====
-function ItineraryShell({ activeTab = "faceid", onTabChange, children, statusBadge, toast, onToastClose }) {
+function ItineraryShell({ activeTab = "faceid", onTabChange, children, toast, onToastClose }) {
   const it = window.PROTO_DATA.itinerary;
   const setTab = onTabChange || (() => {});
   return (
@@ -341,11 +341,10 @@ function ItineraryShell({ activeTab = "faceid", onTabChange, children, statusBad
                 <Icon name="qr" size={14} stroke={PMS.inkSubtle}/>
               </span>
             </div>
-            {statusBadge && <div style={{ marginLeft: 4 }}>{statusBadge}</div>}
           </div>
 
           <div style={{ marginTop: 14, display: "flex", gap: 4, borderBottom: `1px solid ${PMS.border}` }}>
-            {[["info", "Itinerary info"], ["rooms", "Room List"], ["faceid", "Face ID Registration"]].map(([k, l]) => {
+            {[["info", "Itinerary info"], ["rooms", "Room List"], ["faceid", "Face ID Registration"], ["activity", "Activity Logs"]].map(([k, l]) => {
               const active = k === activeTab;
               return (
                 <div key={k} onClick={() => setTab(k)} style={{ padding: "8px 14px", fontSize: 13, fontWeight: active ? 600 : 500, color: active ? PMS.brand : PMS.inkMuted, cursor: "pointer", borderBottom: `2px solid ${active ? PMS.brand : "transparent"}`, marginBottom: -1 }}>
@@ -404,12 +403,8 @@ function RegistrationStatusPill({ state, bioId, error }) {
     );
   }
   if (state === "failed") {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-        <StatusPill tone="danger">✗ Failed</StatusPill>
-        {error && <div style={{ fontSize: 10, color: PMS.danger, paddingLeft: 2 }}>{error}</div>}
-      </div>
-    );
+    // Phase 1 chưa define error code cụ thể → chỉ hiển thị "Failed"
+    return <StatusPill tone="danger">✗ Failed</StatusPill>;
   }
   return <StatusPill tone="warn" dot={false}>◯ Unregistered</StatusPill>;
 }
@@ -505,7 +500,7 @@ function GuestRow({ guest, mode, file, photoMapping, regStatus, bioId, error, on
       <td style={{ padding: "8px 12px", color: PMS.inkMuted, fontFamily: "ui-monospace, Menlo, monospace", fontSize: 11 }}>{guest.confNo}</td>
       <td style={{ padding: "8px 12px", color: PMS.ink, fontWeight: 500 }}>
         {guest.name}
-        <div style={{ fontSize: 10, color: PMS.inkSubtle, fontFamily: "ui-monospace, Menlo, monospace" }}>{guest.profileId} · Room {guest.room}</div>
+        <div style={{ fontSize: 10, color: PMS.inkSubtle, fontFamily: "ui-monospace, Menlo, monospace" }}>{guest.profileId}</div>
       </td>
       <td style={{ padding: "8px 12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -576,7 +571,7 @@ function AttentionSection({ files, guests, onPick, onAssign, onSkip }) {
                   <div style={{ marginTop: 6, display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {candidates.map(g => (
                       <Btn key={g.profileId} size="sm" icon="check" onClick={() => onPick && onPick(f, g)}>
-                        {g.name} · R{g.room}
+                        {g.name} · {g.profileId}
                       </Btn>
                     ))}
                     <Btn size="sm" variant="ghost" icon="skip" onClick={() => onSkip && onSkip(f)}>Skip file</Btn>
@@ -601,7 +596,7 @@ function AttentionSection({ files, guests, onPick, onAssign, onSkip }) {
                   <DropdownMenu align="left" items={[
                     { header: "Chọn guest để gán ảnh" },
                     ...guests.slice(0, 8).map(g => ({
-                      label: `${g.name} · R${g.room} · ${g.profileId}`,
+                      label: `${g.name} · ${g.profileId}`,
                       icon: "user",
                       onClick: () => onAssign && onAssign(f, g),
                     })),
@@ -768,14 +763,15 @@ function FaceIdTabContent({ mode, onAction, batchVersion, onToast }) {
     onAction && onAction(action, guest);
   };
 
-  // ===== Stats banner (5 stats) =====
+  // ===== Stats banner (5 stats — per PO feedback) =====
+  const unregCount = rows.filter(r => r.regStatus === "unregistered").length;
   const banner = (
     <StatsBanner stats={[
-      { label: "Mapped",       value: photoCounts.mapped,        tone: photoCounts.mapped > 0 ? "ok" : "neutral" },
-      { label: "Unmapped",     value: photoCounts.unmapped,      tone: photoCounts.unmapped > 0 ? "warn" : "neutral" },
-      { label: "Needs review", value: photoCounts["needs-review"], tone: photoCounts["needs-review"] > 0 ? "warn" : "neutral" },
-      { label: "Registered",   value: regCounts.registered,      tone: regCounts.registered > 0 ? "ok" : "neutral" },
-      { label: "Failed",       value: regCounts.failed,          tone: regCounts.failed > 0 ? "danger" : "neutral" },
+      { label: "Total guests",  value: data.guests.length,        tone: "neutral" },
+      { label: "Unregistered",  value: unregCount,                tone: unregCount > 0 ? "warn" : "neutral" },
+      { label: "Photo Mapped",  value: photoCounts.mapped,        tone: photoCounts.mapped > 0 ? "ok" : "neutral" },
+      { label: "Registered",    value: regCounts.registered,      tone: regCounts.registered > 0 ? "ok" : "neutral" },
+      { label: "Failed",        value: regCounts.failed,          tone: regCounts.failed > 0 ? "danger" : "neutral" },
     ]}/>
   );
 
@@ -1030,13 +1026,12 @@ function ScreenUploadModal() {
 // SCREEN 03 — Reviewing
 function ScreenReviewing() {
   const { toast, show, close } = useToast();
-  const statusBadge = <StatusPill tone="warn"><Icon name="warn" size={11}/> Reviewing batch</StatusPill>;
   const handle = (action) => {
     if (action === "confirm") { window.GO && window.GO(4); return; }
     if (action === "uploadMore") { window.GO && window.GO(2); return; }
   };
   return (
-    <ItineraryShell activeTab="faceid" statusBadge={statusBadge} toast={toast} onToastClose={close}>
+    <ItineraryShell activeTab="faceid" toast={toast} onToastClose={close}>
       <FaceIdTabContent mode="reviewing" batchVersion={1} onAction={handle} onToast={show}/>
     </ItineraryShell>
   );
@@ -1080,10 +1075,9 @@ function ScreenProcessing() {
   };
   const completed = counts.done + counts.failed;
   const pct = queue.length === 0 ? 100 : Math.round(completed / queue.length * 100);
-  const statusBadge = <StatusPill tone="brand"><Icon name="scan" size={11}/> Processing</StatusPill>;
 
   return (
-    <ItineraryShell activeTab="faceid" statusBadge={statusBadge}>
+    <ItineraryShell activeTab="faceid">
       <div style={{ opacity: 0.35, pointerEvents: "none" }}>
         <FaceIdTabContent mode="reviewing"/>
       </div>
@@ -1167,12 +1161,11 @@ function ScreenResolved() {
   const failCount = outcomes.filter(o => o.status === "failed").length;
   const failedNames = data.guests
     .filter(g => data.outcomes[g.profileId] && data.outcomes[g.profileId].status === "failed")
-    .map(g => `${g.name} (${data.outcomes[g.profileId].error})`)
+    .map(g => g.name)
     .join(", ");
-  const statusBadge = <StatusPill tone="accent"><Icon name="face" size={11}/> {okCount}/{data.guests.length} sẵn sàng</StatusPill>;
 
   return (
-    <ItineraryShell activeTab="faceid" statusBadge={statusBadge} toast={toast} onToastClose={close}>
+    <ItineraryShell activeTab="faceid" toast={toast} onToastClose={close}>
       {!bannerDismissed && (
         <div style={{ background: failCount > 0 ? PMS.warnSoft : PMS.okSoft, border: `1px solid ${failCount > 0 ? "#EBC79A" : "#BFE0CF"}`, borderRadius: 6, padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 12 }}>
           <div style={{ color: failCount > 0 ? PMS.warn : PMS.ok, marginTop: 1 }}><Icon name={failCount > 0 ? "warn" : "check"} size={18}/></div>
