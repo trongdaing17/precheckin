@@ -541,7 +541,7 @@ function AttentionSection({ files, guests, onPick, onAssign, onSkip }) {
       <div onClick={() => setCollapsed(c => !c)} style={{ padding: "10px 14px", background: PMS.warnSoft, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", borderBottom: collapsed ? "none" : `1px solid #EBC79A` }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Icon name="warn" size={16} stroke={PMS.warn}/>
-          <div style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>Photos cần xử lý ({files.length})</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>Photos need to be reviewed ({files.length})</div>
           <div style={{ fontSize: 11, color: PMS.inkMuted }}>
             {ambiguous.length > 0 && <>⚠ {ambiguous.length} needs review</>}
             {ambiguous.length > 0 && unmapped.length > 0 && " · "}
@@ -564,7 +564,7 @@ function AttentionSection({ files, guests, onPick, onAssign, onSkip }) {
                     <span style={{ fontSize: 11, color: PMS.inkSubtle }}>{f.size}</span>
                   </div>
                   <div style={{ fontSize: 11, color: PMS.inkMuted, marginTop: 4 }}>
-                    Tên file <code style={{ background: PMS.bg, padding: "0 4px", borderRadius: 2 }}>{f.normalized}</code> khớp với {candidates.length} guests cùng tên:
+                    File name <code style={{ background: PMS.bg, padding: "0 4px", borderRadius: 2 }}>{f.normalized}</code> matches {candidates.length} guests with the same name:
                   </div>
                   <div style={{ marginTop: 6, display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {candidates.map(g => (
@@ -588,18 +588,18 @@ function AttentionSection({ files, guests, onPick, onAssign, onSkip }) {
                   <span style={{ fontSize: 11, color: PMS.inkSubtle }}>{f.size}</span>
                 </div>
                 <div style={{ fontSize: 11, color: PMS.inkMuted, marginTop: 4 }}>
-                  Tên file <code style={{ background: PMS.bg, padding: "0 4px", borderRadius: 2 }}>{f.normalized}</code> không match guest nào trong roster.
+                  File name <code style={{ background: PMS.bg, padding: "0 4px", borderRadius: 2 }}>{f.normalized}</code> does not match any guests.
                 </div>
                 <div style={{ marginTop: 6, display: "flex", gap: 6 }}>
                   <DropdownMenu align="left" items={[
-                    { header: "Chọn guest để gán ảnh" },
+                    { header: "Choose guest to assign photo" },
                     ...guests.slice(0, 8).map(g => ({
                       label: `${g.name} · ${g.profileId}`,
                       icon: "user",
                       onClick: () => onAssign && onAssign(f, g),
                     })),
                   ]}>
-                    <Btn size="sm" icon="user">Gán cho guest ▾</Btn>
+                    <Btn size="sm" icon="user">Choose guest to assign photo▾</Btn>
                   </DropdownMenu>
                   <Btn size="sm" variant="ghost" icon="skip" onClick={() => onSkip && onSkip(f)}>Skip</Btn>
                 </div>
@@ -727,15 +727,15 @@ function FaceIdTabContent({ mode, onAction, batchVersion, onToast }) {
   // ----- Action handlers (transitions inside Reviewing) -----
   const pickAmbiguous = (file, guest) => {
     setBatchFiles(prev => prev.map(f => f.file === file.file ? { ...f, match: guest.profileId, status: "matched" } : f));
-    onToast && onToast(`Đã gán ${file.file} cho ${guest.name} (R${guest.room})`, "ok");
+    onToast && onToast(`Mapped ${file.file} to ${guest.name} (R${guest.room})`, "ok");
   };
   const assignUnmapped = (file, guest) => {
     setBatchFiles(prev => prev.map(f => f.file === file.file ? { ...f, match: guest.profileId, status: "matched" } : f));
-    onToast && onToast(`Đã gán ${file.file} cho ${guest.name}`, "ok");
+    onToast && onToast(`Mapped ${file.file} to ${guest.name}`, "ok");
   };
   const skipFile = (file) => {
     setSkippedFileNames(prev => new Set([...prev, file.file]));
-    onToast && onToast(`Đã skip file ${file.file}`, "warn");
+    onToast && onToast(`Skipped file ${file.file}`, "warn");
   };
   const skipGuest = (guest) => {
     setSkippedGuestIds(prev => new Set([...prev, guest.profileId]));
@@ -784,11 +784,11 @@ function FaceIdTabContent({ mode, onAction, batchVersion, onToast }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, padding: "10px 14px" }}>
         <div style={{ fontSize: 12, color: PMS.inkMuted }}>
           {mode === "default"
-            ? <><strong style={{ color: PMS.ink }}>{data.guests.length}</strong> guests trong đoàn · chưa khách nào đăng ký Face ID</>
-            : <><strong style={{ color: PMS.ink }}>{regCounts.registered} / {data.guests.length}</strong> guests sẵn sàng Face ID check-in</>}
+            ? <><strong style={{ color: PMS.ink }}>{data.guests.length}</strong> registered</>
+            : <><strong style={{ color: PMS.ink }}>{regCounts.registered} / {data.guests.length}</strong> registered</>}
         </div>
         <div style={{ display: "flex", gap: 6 }}>
-          <Btn variant="primary" icon="upload" onClick={() => onAction && onAction("openUpload")}>Đăng ký Face ID hàng loạt</Btn>
+          <Btn variant="primary" icon="upload" onClick={() => onAction && onAction("openUpload")}>Bulk Face ID Registration</Btn>
         </div>
       </div>
     );
@@ -797,7 +797,7 @@ function FaceIdTabContent({ mode, onAction, batchVersion, onToast }) {
       <div style={{ background: PMS.warnSoft, border: `1px solid #EBC79A`, borderRadius: 6, padding: "10px 14px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div style={{ fontSize: 12, color: PMS.ink }}>
-            <strong>⚠ Đang review batch #{batchVersion || 1}</strong> · {batchFiles.length} files → {data.guests.length} guests ·{" "}
+            <strong>⚠ Reviewing #{batchVersion || 1}</strong> · {batchFiles.length} files → {data.guests.length} guests ·{" "}
             <span style={{ color: PMS.ok }}>✓ {photoCounts.mapped} mapped</span> ·{" "}
             <span style={{ color: PMS.warn }}>⚠ {photoCounts["needs-review"]} needs review</span> ·{" "}
             <span style={{ color: PMS.inkMuted }}>◯ {photoCounts.unmapped} unmapped</span>
@@ -838,10 +838,10 @@ function FaceIdTabContent({ mode, onAction, batchVersion, onToast }) {
 
       {/* Search + count */}
       <div style={{ marginTop: 8, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 6, padding: "6px 10px" }}>
-        <div style={{ fontSize: 12, color: PMS.inkMuted }}>Hiển thị {visible.length} / {rows.length} guests</div>
+        <div style={{ fontSize: 12, color: PMS.inkMuted }}>{visible.length} / {rows.length} guests</div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 10px", borderRadius: 5, border: `1px solid ${PMS.border}`, fontSize: 12, color: PMS.inkSubtle, minWidth: 240 }}>
           <Icon name="search" size={13}/>
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm theo conf. no hoặc tên…" style={{ border: "none", outline: "none", background: "transparent", fontSize: 12, color: PMS.ink, flex: 1 }}/>
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by conf. guest name…" style={{ border: "none", outline: "none", background: "transparent", fontSize: 12, color: PMS.ink, flex: 1 }}/>
         </div>
       </div>
 
@@ -858,7 +858,7 @@ function FaceIdTabContent({ mode, onAction, batchVersion, onToast }) {
             {visible.length === 0 && (
               <tr>
                 <td colSpan={6} style={{ padding: "32px 12px", textAlign: "center", color: PMS.inkSubtle, fontSize: 12 }}>
-                  Không có guest nào khớp filter "{filter}" {search && `+ search "${search}"`}.
+                  No guests found"{filter}" {search && `+ search "${search}"`}.
                 </td>
               </tr>
             )}
@@ -911,17 +911,17 @@ function UploadModal({ onClose, onDone }) {
       <div style={{ width: 640, background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 8, boxShadow: "0 24px 60px rgba(17,32,46,0.18)", overflow: "hidden" }}>
         <div style={{ padding: "14px 18px", borderBottom: `1px solid ${PMS.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: PMS.ink }}>Đăng ký Face ID hàng loạt</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: PMS.ink }}>Bulk Face ID Registration</div>
             <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 2 }}>
-              {stage === "idle" && "Bước 1/3 · Chọn file ảnh"}
-              {(stage === "uploading" || stage === "matching") && "Bước 1/3 · Đang upload + auto-match"}
-              {stage === "done" && "Bước 1/3 · Hoàn tất — sẵn sàng review"}
+              {stage === "idle" && "Step 1/3 · Choose photo file"}
+              {(stage === "uploading" || stage === "matching") && "Step 1/3 · Uploading + auto-match"}
+              {stage === "done" && "Step 1/3 · Finished — Ready to review"}
             </div>
           </div>
           <Btn size="sm" variant="ghost" icon="x" onClick={onClose}>Đóng</Btn>
         </div>
         <div style={{ display: "flex", gap: 6, padding: "10px 18px", background: PMS.surfaceMuted, borderBottom: `1px solid ${PMS.border}`, fontSize: 11 }}>
-          {["1. Chọn ảnh", "2. Review mapping", "3. Confirm & Register"].map((s, i) => (
+          {["1. Choose photo", "2. Review mapping", "3. Confirm & Register"].map((s, i) => (
             <React.Fragment key={i}>
               <span style={{ color: i === 0 ? PMS.brand : PMS.inkSubtle, fontWeight: i === 0 ? 600 : 500 }}>{s}</span>
               {i < 2 && <span style={{ color: PMS.inkSubtle }}>›</span>}
@@ -935,22 +935,22 @@ function UploadModal({ onClose, onDone }) {
                 <div style={{ display: "inline-grid", placeItems: "center", width: 52, height: 52, borderRadius: 12, background: PMS.brandSoft, color: PMS.brand, marginBottom: 10 }}>
                   <Icon name="upload" size={26}/>
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: PMS.ink }}>Kéo thả ảnh JPG/PNG/JPEG, hoặc click để chọn</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: PMS.ink }}>Drag and drop photos here, or click to browse</div>
                 <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 4, lineHeight: 1.6 }}>
-                  Multi-select · tên file = họ tên khách (vd <code style={{ background: PMS.bg, padding: "1px 5px", borderRadius: 3 }}>nguyen thi van.jpg</code>)<br/>
-                  Tối đa 200 ảnh · Mỗi ảnh ≤ 5 MB · Tổng ≤ 500 MB
+                  Multi-select · file name = guest's full name (vd <code style={{ background: PMS.bg, padding: "1px 5px", borderRadius: 3 }}>nguyen thi van.jpg</code>)<br/>
+                  Max 200 photos · Each photo ≤ 5 MB · Total ≤ 500 MB
                 </div>
               </div>
               <div style={{ marginTop: 14, padding: 12, background: PMS.warnSoft, border: `1px solid #EBC79A`, borderRadius: 6, display: "flex", gap: 10, alignItems: "flex-start" }}>
                 <div style={{ color: PMS.warn, marginTop: 1 }}><Icon name="lock" size={16}/></div>
                 <label style={{ fontSize: 12, color: PMS.ink, lineHeight: 1.55, flex: 1, cursor: "pointer", display: "flex", gap: 8, alignItems: "flex-start" }}>
                   <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} style={{ marginTop: 2 }}/>
-                  <span><strong>PDPA consent.</strong> Khách đã đồng ý cho khách sạn lưu ảnh khuôn mặt phục vụ check-in. Mọi thao tác được ghi audit log. (NĐ 13/2023/NĐ-CP)</span>
+                  <span><strong>PDPA consent.</strong> Privacy notice. By continuing, you confirm that all guests have consented to the hotel storing their facial images for check-in purposes. All actions are logged for audit purposes.</span>
                 </label>
               </div>
               <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end", gap: 6 }}>
-                <Btn onClick={onClose}>Huỷ</Btn>
-                <Btn variant="primary" icon="folder" disabled={!consent} onClick={() => setStage("uploading")}>Chọn ảnh từ máy</Btn>
+                <Btn onClick={onClose}>Close</Btn>
+                <Btn variant="primary" icon="folder" disabled={!consent} onClick={() => setStage("uploading")}>Choose files</Btn>
               </div>
             </>
           )}
@@ -959,12 +959,12 @@ function UploadModal({ onClose, onDone }) {
               <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", border: `1px solid ${PMS.border}`, borderRadius: 6 }}>
                 <div style={{ width: 38, height: 38, borderRadius: 6, background: PMS.brandSoft, color: PMS.brand, display: "grid", placeItems: "center" }}><Icon name="upload" size={20}/></div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>19 ảnh · 8.4 MB</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: PMS.ink }}>19 photos · 8.4 MB</div>
                   <div style={{ fontSize: 11, color: PMS.inkMuted }}>
-                    {stage === "uploading" ? `Đang upload lên S3… ${progress}%` : "Đang chuẩn hoá tên + auto-match với 18 guest profile…"}
+                    {stage === "uploading" ? `Uploading to S3… ${progress}%` : "Normalizing names + auto-matching with 18 guest profiles…"}
                   </div>
                 </div>
-                <Btn size="sm" variant="ghost" icon="x" onClick={onClose}>Huỷ</Btn>
+                <Btn size="sm" variant="ghost" icon="x" onClick={onClose}>Cancel</Btn>
               </div>
               <div style={{ height: 6, marginTop: 14, background: PMS.bg, borderRadius: 999, overflow: "hidden" }}>
                 <div style={{ height: "100%", width: stage === "uploading" ? `${progress}%` : "100%", background: stage === "uploading" ? PMS.brand : PMS.accent, transition: "width 0.2s" }}/>
@@ -976,13 +976,13 @@ function UploadModal({ onClose, onDone }) {
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ width: 32, height: 32, borderRadius: "50%", background: PMS.okSoft, color: PMS.ok, display: "grid", placeItems: "center" }}><Icon name="check" size={18}/></div>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>Đã upload 19 ảnh</div>
-                  <div style={{ fontSize: 12, color: PMS.inkMuted }}>15 mapped · 1 needs review · 3 unmapped · 1 guest chưa có ảnh</div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>Uploaded 19 photos</div>
+                  <div style={{ fontSize: 12, color: PMS.inkMuted }}>15 mapped · 1 needs review · 3 unmapped</div>
                 </div>
               </div>
               <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end", gap: 6 }}>
-                <Btn onClick={() => setStage("idle")}>Chọn ảnh khác</Btn>
-                <Btn variant="primary" icon="arrowRight" onClick={onDone}>Tiếp tục review</Btn>
+                <Btn onClick={() => setStage("idle")}>Upload more</Btn>
+                <Btn variant="primary" icon="arrowRight" onClick={onDone}>Continue reviewing</Btn>
               </div>
             </>
           )}
@@ -1115,8 +1115,8 @@ function ScreenProcessing() {
         <div style={{ width: 640, maxHeight: "82%", background: PMS.surface, border: `1px solid ${PMS.border}`, borderRadius: 8, boxShadow: "0 24px 60px rgba(17,32,46,0.18)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
           <div style={{ padding: "14px 18px", borderBottom: `1px solid ${PMS.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: PMS.ink }}>{done ? "Hoàn tất batch" : "Đang xử lý Face ID"}</div>
-              <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 2 }}>Bước 3/3 · {completed} / {queue.length} processed · concurrency = 5</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: PMS.ink }}>{done ? "Finished" : "Processing Face ID registration"}</div>
+              <div style={{ fontSize: 12, color: PMS.inkMuted, marginTop: 2 }}>Step 3/3 · {completed} / {queue.length} processed · concurrency = 5</div>
             </div>
             {!done && <Btn size="sm" variant="ghost" icon="x" onClick={() => { setPaused(true); setCancelModal(true); }}>Cancel</Btn>}
           </div>
@@ -1172,7 +1172,7 @@ function ScreenProcessing() {
           </div>
           {done && (
             <div style={{ padding: "10px 18px", background: PMS.surfaceMuted, borderTop: `1px solid ${PMS.border}`, display: "flex", justifyContent: "flex-end", gap: 6 }}>
-              <Btn variant="primary" icon="arrowRight" onClick={() => window.GO && window.GO(5)}>Xem kết quả →</Btn>
+              <Btn variant="primary" icon="arrowRight" onClick={() => window.GO && window.GO(5)}>View results →</Btn>
             </div>
           )}
         </div>
